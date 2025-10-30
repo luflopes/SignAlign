@@ -1,3 +1,4 @@
+import os
 import argparse
 import csv
 import logging
@@ -55,6 +56,8 @@ def main():
     parser.add_argument("--use-amp", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--max-grad-norm", type=float, default=1.0)
     parser.add_argument("--num-workers", type=int, default=4)
+    # Reduce default workers to avoid DataLoader overload in constrained environments
+    parser.add_argument("--num-workers", type=int, default=2)
     parser.add_argument("--save-every", type=int, default=1)
     parser.add_argument("--log-interval", type=int, default=50)
     parser.add_argument("--neg-samples", type=int, default=3)
