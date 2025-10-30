@@ -110,7 +110,7 @@ def validate_and_compute_metrics(model, processor, val_pairs, val_transform, num
 def validate_and_visualize(model, processor, val_pairs, val_transform, num_pairs_to_display=10, num_negative_samples=3):
 
     # This function is now primarily for visualization after training
-    metrics = validate_and_compute_metrics(model, processor, val_pairs, num_negative_samples)
+    metrics = validate_and_compute_metrics(model, processor, val_pairs, val_transform, num_negative_samples=num_negative_samples)
 
     print("\n### Validation Metrics ###")
     print(f"EER: {metrics['eer']:.4f} (threshold={metrics['eer_threshold']:.4f})")
