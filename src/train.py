@@ -15,7 +15,7 @@ from src.dataset import (
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
 from src.utils import set_seed
-from src.validate import validate_and_compute_metrics
+from src.validate import validate_and_compute_metrics, validate_and_visualize
 from src.loss import CrossEntropyLoss, ContrastiveLoss, TripletLoss
 from tqdm.auto import tqdm
 from src.models import create_model, create_processor
@@ -271,7 +271,7 @@ def main(config):
                 print(f"⏸️ Early stopping: sem melhoria por {early_stopping_patience} epochs. Parando treino.")
                 break
 
-
+            validate_and_visualize(model, processor, val_pairs, val_transform, num_pairs_to_display=10, num_negative_samples=3)
         # Print combined metrics for the epoch
         print(f"✅ Epoch {epoch+1}/{config.epochs} | Train Loss: {epoch_avg_loss:.4f} | Train Avg Pos Sim: {epoch_avg_pos_sim:.4f} | Train Avg Neg Sim: {epoch_avg_neg_sim:.4f} | Val Accuracy: {current_val_accuracy:.4f}")
 
