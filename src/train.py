@@ -262,6 +262,11 @@ def main(config):
                 model.save_pretrained(best_model_path)
                 processor.save_pretrained(best_model_path)
                 print(f"🌟 Nova melhor acurácia de validação ({best_val_accuracy:.4f}). Melhor modelo salvo em: {best_model_path}")
+                # Save / show validation visualization examples to output_dir for inspection
+                try:
+                    validate_and_visualize(model, processor, val_pairs, val_transform, num_pairs_to_display=10, num_negative_samples=getattr(config, 'neg_samples', 3), save_dir=output_dir)
+                except Exception as e:
+                    print(f"Warning: validate_and_visualize failed: {e}")
                 epochs_since_improvement = 0
             else:
                 epochs_since_improvement += 1
