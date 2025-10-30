@@ -24,7 +24,7 @@ def validate_and_compute_metrics(model, processor, val_pairs, val_transform, num
     all_labels = []
     correct_predictions = 0
     total_evaluations = 0
-    
+
     # Group pairs by name for easier sampling of negative examples
     pairs_by_name = defaultdict(list)
     for img_path, name in val_pairs:
