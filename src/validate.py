@@ -7,6 +7,7 @@ import random
 import numpy as np
 from src.utils import cosine_similarity, paste_center_on_canvas
 from PIL import Image
+from pathlib import Path
 
 
 def compute_eer(y_true, y_scores):
@@ -107,7 +108,7 @@ def validate_and_compute_metrics(model, processor, val_pairs, val_transform, num
     }
 
 
-def validate_and_visualize(model, processor, val_pairs, val_transform, num_pairs_to_display=10, num_negative_samples=3):
+def validate_and_visualize(model, processor, val_pairs, val_transform, num_pairs_to_display=10, num_negative_samples=3, save_dir: Path = None):
 
     # This function is now primarily for visualization after training
     metrics = validate_and_compute_metrics(model, processor, val_pairs, val_transform, num_negative_samples=num_negative_samples)
@@ -125,7 +126,7 @@ def validate_and_visualize(model, processor, val_pairs, val_transform, num_pairs
     unique_names = list(pairs_by_name.keys())
 
     with torch.no_grad():
-         for name in random.sample(unique_names, min(num_pairs_to_display, len(unique_names))):
+        for idx, name in enumerate(random.sample(unique_names, min(num_pairs_to_display, len(unique_names)))):
             matching_img_paths = pairs_by_name[name]
             if not matching_img_paths:
                 continue
@@ -182,7 +183,23 @@ def validate_and_visualize(model, processor, val_pairs, val_transform, num_pairs
                 prediction_status = "Correct" if prediction_correct else "Incorrect"
                 plt.suptitle(f"{name} - Prediction: {prediction_status}", y=1.02, fontsize=14)
                 plt.tight_layout()
-                plt.show()
+                # If save_dir provided, save the figure; otherwise attempt to show
+                if save_dir is not None:
+                    try:
+                        save_dir = Path(save_dir)
+                        save_dir.mkdir(parents=True, exist_ok=True)
+                        out_path = save_dir / f"val_example_{idx+1:03d}.png"
+                        fig.savefig(out_path, bbox_inches="tight")
+                        print(f"Saved validation example to: {out_path}")
+                    except Exception as e:
+                        print(f"Failed to save figure: {e}")
+                else:
+                    try:
+                        plt.show()
+                    except Exception:
+                        # In headless environments plt.show() may fail silently; continue
+                        pass
+                plt.close(fig)
 
 
                 
