@@ -1,0 +1,52 @@
+name: siglip_combined_tw02_noaug
+seed: 5932
+output_dir: experiments
+data:
+  dataset_csv: datasets/dataset-sign-align/dataset.csv
+  images_base_path: datasets/dataset-sign-align
+  val_ratio: 0.15
+  exclude_unknown: true
+  batch_size: 32
+  max_samples: null
+  augmentation:
+    enabled: false
+    random_rotation: 5
+    random_scale:
+    - 0.95
+    - 1.05
+    random_brightness: 0.1
+    random_contrast: 0.1
+training:
+  epochs: 30
+  learning_rate: 1.0e-06
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  use_amp: true
+  save_every: 5
+  save_only_best: true
+  early_stopping_patience: 10
+  scheduler:
+    type: plateau
+    factor: 0.5
+    patience: 3
+    min_lr: 1.0e-08
+evaluation:
+  negative_samples:
+  - 1
+  - 2
+  - 3
+  compute_eer: true
+  compute_auc: true
+model:
+  type: siglip
+  pretrained_name: google/siglip-base-patch16-224
+  image_size: 224
+  freeze_vision_encoder: false
+  freeze_text_encoder: false
+loss:
+  primary_loss: sigmoid
+  temperature: 1.0
+  sigmoid_bias: -10.0
+  use_triplet_loss: true
+  triplet_weight: 0.2
+  triplet_margin: 0.2

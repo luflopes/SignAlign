@@ -1,0 +1,63 @@
+# Pastas excluídas
+assets/
+datasets/
+rotulacao/
+venv/
+experiments/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+tensorboard/
+
+# Checkpoints (grandes demais para git)
+checkpoints/
+*.pt
+*.pth
+*.safetensors
+
+# Ambiente
+.env
+.envrc
+
+# Temporários
+tmp/
+temp/
+*.tmp
+
