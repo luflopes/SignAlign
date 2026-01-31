@@ -4,6 +4,7 @@ datasets/
 rotulacao/
 venv/
 experiments/
+EXPERIMENT_GUIDE.md
 
 # Python
 __pycache__/
