@@ -31,40 +31,40 @@ CONFIGS=(
     "clip_vit_b16_frozen_eval"
     "siglip_frozen_eval"
     "tinyclip_infonce"
-    "tinyclip_combined_tw01"
-    "tinyclip_combined_tw02"
-    "tinyclip_combined_tw03"
-    "tinyclip_combined_tw04"
-    "tinyclip_combined_tw05"
     "tinyclip_infonce_noaug"
+    "tinyclip_combined_tw01"
     "tinyclip_combined_tw01_noaug"
+    "tinyclip_combined_tw02"
     "tinyclip_combined_tw02_noaug"
+    "tinyclip_combined_tw03"
     "tinyclip_combined_tw03_noaug"
+    "tinyclip_combined_tw04"
     "tinyclip_combined_tw04_noaug"
+    "tinyclip_combined_tw05"
     "tinyclip_combined_tw05_noaug"
     "clip_vit_b32_infonce"
-    "clip_vit_b32_combined_tw01"
-    "clip_vit_b32_combined_tw02"
-    "clip_vit_b32_combined_tw03"
-    "clip_vit_b32_combined_tw04"
-    "clip_vit_b32_combined_tw05"
     "clip_vit_b32_infonce_noaug"
+    "clip_vit_b32_combined_tw01"
     "clip_vit_b32_combined_tw01_noaug"
+    "clip_vit_b32_combined_tw02"
     "clip_vit_b32_combined_tw02_noaug"
+    "clip_vit_b32_combined_tw03"
     "clip_vit_b32_combined_tw03_noaug"
+    "clip_vit_b32_combined_tw04"
     "clip_vit_b32_combined_tw04_noaug"
+    "clip_vit_b32_combined_tw05"
     "clip_vit_b32_combined_tw05_noaug"
     "siglip_sigmoid"
-    "siglip_combined_tw01"
-    "siglip_combined_tw02"
-    "siglip_combined_tw03"
-    "siglip_combined_tw04"
-    "siglip_combined_tw05"
     "siglip_sigmoid_noaug"
+    "siglip_combined_tw01"
     "siglip_combined_tw01_noaug"
+    "siglip_combined_tw02"
     "siglip_combined_tw02_noaug"
+    "siglip_combined_tw03"
     "siglip_combined_tw03_noaug"
+    "siglip_combined_tw04"
     "siglip_combined_tw04_noaug"
+    "siglip_combined_tw05"
     "siglip_combined_tw05_noaug"
 )
 
@@ -78,11 +78,24 @@ for CONFIG in "${CONFIGS[@]}"; do
     echo "[$COUNT/$TOTAL] Executando: $CONFIG"
     echo "====================================="
     
-    if python scripts/run_experiment.py --config "configs/grid/${CONFIG}.yaml" $EXTRA_ARGS; then
-        echo "✅ $CONFIG concluído"
+    # Experimentos frozen_eval devem ser apenas avaliação (ignorar --epochs)
+    if [[ "$CONFIG" == *"frozen_eval"* ]]; then
+        # Remover --epochs dos argumentos para experimentos frozen
+        FILTERED_ARGS=$(echo "$EXTRA_ARGS" | sed 's/--epochs[[:space:]]*[0-9]*//g')
+        echo "🔒 Experimento frozen: forçando --eval-only"
+        if python scripts/run_experiment.py --config "configs/grid/${CONFIG}.yaml" --eval-only $FILTERED_ARGS; then
+            echo "✅ $CONFIG concluído"
+        else
+            echo "❌ $CONFIG FALHOU"
+            FAILED=$((FAILED + 1))
+        fi
     else
-        echo "❌ $CONFIG FALHOU"
-        FAILED=$((FAILED + 1))
+        if python scripts/run_experiment.py --config "configs/grid/${CONFIG}.yaml" $EXTRA_ARGS; then
+            echo "✅ $CONFIG concluído"
+        else
+            echo "❌ $CONFIG FALHOU"
+            FAILED=$((FAILED + 1))
+        fi
     fi
 done
 

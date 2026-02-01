@@ -88,5 +88,5 @@ model:
   type: clip
   image_size: 224
   freeze_vision_encoder: true
-  freeze_text_encoder: false
+  freeze_text_encoder: true
   output_attentions: true
