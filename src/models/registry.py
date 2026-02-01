@@ -114,6 +114,9 @@ def create_model(
     # Mover para dispositivo
     if device:
         wrapper.model = wrapper.model.to(device)
+        # Confirmar que está no dispositivo correto
+        param_device = next(wrapper.model.parameters()).device
+        print(f"✅ Modelo carregado no dispositivo: {param_device}")
     
     return wrapper
 

@@ -25,7 +25,14 @@ def set_seed(seed: int) -> None:
 
 def get_device() -> torch.device:
     """Retorna o dispositivo disponível (CUDA se disponível, senão CPU)."""
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"🖥️ Usando dispositivo: {device}")
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+        print(f"🖥️ GPU disponível: {torch.cuda.get_device_name(0)}")
+        print(f"   Memória total: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB")
+        print(f"   CUDA version: {torch.version.cuda}")
+    else:
+        device = torch.device("cpu")
+        print("⚠️ GPU não disponível, usando CPU")
+    print(f"🖥️ Dispositivo selecionado: {device}")
     return device
 
