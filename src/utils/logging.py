@@ -5,7 +5,34 @@ import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+import numpy as np
 import torch
+
+
+def convert_to_serializable(obj: Any) -> Any:
+    """
+    Converte recursivamente objetos para tipos JSON serializáveis.
+    
+    Trata numpy arrays, tensors PyTorch, e tipos numpy escalares.
+    """
+    if isinstance(obj, dict):
+        return {k: convert_to_serializable(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_to_serializable(item) for item in obj]
+    elif isinstance(obj, tuple):
+        return tuple(convert_to_serializable(item) for item in obj)
+    elif isinstance(obj, (np.floating, np.float32, np.float64)):
+        return float(obj)
+    elif isinstance(obj, (np.integer, np.int32, np.int64)):
+        return int(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, torch.Tensor):
+        return obj.detach().cpu().numpy().tolist()
+    elif isinstance(obj, (np.bool_,)):
+        return bool(obj)
+    else:
+        return obj
 
 
 class ExperimentLogger:
@@ -83,12 +110,12 @@ class ExperimentLogger:
         metrics = {
             "epoch": epoch,
             "step": step,
-            "loss": loss,
-            "lr": lr,
+            "loss": convert_to_serializable(loss),
+            "lr": convert_to_serializable(lr),
             "timestamp": datetime.now().isoformat(),
         }
         if extra_metrics:
-            metrics.update(extra_metrics)
+            metrics.update(convert_to_serializable(extra_metrics))
         
         self.train_history.append(metrics)
         
@@ -108,12 +135,13 @@ class ExperimentLogger:
         lr: float
     ) -> None:
         """Loga métricas de uma época completa."""
+        # Converter valores para tipos nativos Python
         epoch_log = {
             "epoch": epoch,
-            "train_loss": train_loss,
-            "lr": lr,
+            "train_loss": convert_to_serializable(train_loss),
+            "lr": convert_to_serializable(lr),
             "timestamp": datetime.now().isoformat(),
-            **{f"val_{k}": v for k, v in val_metrics.items()}
+            **{f"val_{k}": convert_to_serializable(v) for k, v in val_metrics.items()}
         }
         self.val_history.append(epoch_log)
         
@@ -126,7 +154,7 @@ class ExperimentLogger:
     def log_best_model(self, epoch: int, metric_name: str, metric_value: float) -> None:
         """Registra informações sobre o melhor modelo."""
         self.metadata["best_epoch"] = epoch
-        self.metadata["best_metric"] = {metric_name: metric_value}
+        self.metadata["best_metric"] = {metric_name: convert_to_serializable(metric_value)}
     
     def save_checkpoint(
         self,
@@ -174,10 +202,10 @@ class ExperimentLogger:
         val_path = self.metrics_dir / "val_history.json"
         
         with open(train_path, "w") as f:
-            json.dump(self.train_history, f, indent=2)
+            json.dump(convert_to_serializable(self.train_history), f, indent=2)
         
         with open(val_path, "w") as f:
-            json.dump(self.val_history, f, indent=2)
+            json.dump(convert_to_serializable(self.val_history), f, indent=2)
     
     def finalize(self) -> None:
         """Finaliza o logging e salva todos os dados."""
@@ -186,7 +214,7 @@ class ExperimentLogger:
         # Salvar metadata
         metadata_path = self.output_dir / "metadata.json"
         with open(metadata_path, "w") as f:
-            json.dump(self.metadata, f, indent=2)
+            json.dump(convert_to_serializable(self.metadata), f, indent=2)
         
         # Salvar histórico
         self.save_metrics()
