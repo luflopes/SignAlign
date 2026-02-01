@@ -111,6 +111,12 @@ def parse_args():
         help="Peso da Triplet Loss (sobrescreve config)"
     )
     
+    parser.add_argument(
+        "--save-only-best",
+        action="store_true",
+        help="Salva apenas o melhor checkpoint (sobrescreve config)"
+    )
+    
     return parser.parse_args()
 
 
@@ -165,6 +171,11 @@ def main():
     if args.eval_only:
         config.training.epochs = 0
         print("📊 MODO AVALIAÇÃO: Sem treino, apenas métricas")
+    
+    # Salvar apenas melhor modelo
+    if args.save_only_best:
+        config.training.save_only_best = True
+        print("💾 Salvando apenas o melhor checkpoint")
     
     # Criar e executar trainer
     trainer = Trainer(config)
