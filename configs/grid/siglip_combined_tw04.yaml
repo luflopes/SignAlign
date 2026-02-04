@@ -43,7 +43,7 @@ data:
     color_p: 0.2
     compression_p: 0.2
 training:
-  epochs: 20
+  epochs: 30
   learning_rate: 1.0e-06
   weight_decay: 0.01
   max_grad_norm: 1.0
