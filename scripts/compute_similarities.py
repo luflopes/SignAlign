@@ -120,7 +120,14 @@ def process_experiment(experiment_dir: Path, device: torch.device):
     # Carregar modelo
     print(f"   📦 Carregando modelo...")
     try:
-        model, processor = load_model_from_experiment(str(experiment_dir), device=device)
+        # Extrair tipo do modelo do config
+        model_type = config_dict.get("model", {}).get("type", "tinyclip")
+        model = load_model_from_experiment(
+            str(experiment_dir), 
+            device=device,
+            model_type=model_type
+        )
+        processor = model.processor
     except Exception as e:
         print(f"   ❌ Erro ao carregar modelo: {e}")
         return False
