@@ -1,10 +1,12 @@
-# Pastas excluídas
+# Pastas excluídas e arquivos de rascunho
 assets/
 datasets/
 rotulacao/
 venv/
 experiments/
 EXPERIMENT_GUIDE.md
+cursor_framework_modular_para_recupera.md
+TODO
 
 # Python
 __pycache__/
@@ -61,4 +63,4 @@ checkpoints/
 tmp/
 temp/
 *.tmp
-
+cur
