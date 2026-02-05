@@ -177,6 +177,10 @@ class Trainer:
             # Validar
             val_metrics = self._validate(val_transform)
             
+            # Calcular estatísticas de similaridade no conjunto de validação
+            similarity_stats = self._compute_similarity_statistics(val_transform)
+            val_metrics.update(similarity_stats)
+            
             # Log de época
             current_lr = self.optimizer.param_groups[0]['lr']
             self.logger.log_epoch(
@@ -230,6 +234,7 @@ class Trainer:
             print(f"\n✅ Época {self.current_epoch}/{self.config.training.epochs}")
             print(f"   Train Loss: {train_metrics['loss']:.4f}")
             print(f"   Val Accuracy: {main_metric:.4f}")
+            print(f"   Sim+ {similarity_stats.get('mean_pos_similarity', 0):.4f} | Sim- {similarity_stats.get('mean_neg_similarity', 0):.4f} | Gap: {similarity_stats.get('similarity_gap', 0):.4f}")
             print(f"   LR: {current_lr:.2e}")
             if is_best and main_metric > 0:
                 print(f"   🌟 Nova melhor accuracy!")
