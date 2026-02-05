@@ -23,7 +23,7 @@ from tqdm import tqdm
 
 from src.config.experiment_config import load_config
 from src.models.registry import load_model_from_experiment
-from src.data.batch_builder import load_dataset_pairs, split_by_individual
+from src.data.batch_builder import load_dataset_pairs, create_train_val_split
 from src.data.dataset import SignatureNameDataset, collate_fn
 from src.data.augmentations import get_val_transform
 from src.utils.seed import set_seed, get_device
@@ -131,7 +131,7 @@ def process_experiment(experiment_dir: Path, device: torch.device):
     # Extrair paths do config
     dataset_csv = config_dict.get("data", {}).get("dataset_csv", "datasets/dataset-sign-align/dataset.csv")
     images_base_path = config_dict.get("data", {}).get("images_base_path", "datasets/dataset-sign-align")
-    train_ratio = config_dict.get("data", {}).get("train_ratio", 0.85)
+    val_ratio = config_dict.get("data", {}).get("val_ratio", 0.15)
     exclude_unknown = config_dict.get("data", {}).get("exclude_unknown", True)
     seed = config_dict.get("seed", 42)
     
@@ -143,9 +143,9 @@ def process_experiment(experiment_dir: Path, device: torch.device):
         exclude_unknown=exclude_unknown
     )
     
-    _, val_pairs = split_by_individual(
+    _, val_pairs = create_train_val_split(
         all_pairs,
-        train_ratio=train_ratio,
+        val_ratio=val_ratio,
         seed=seed
     )
     
