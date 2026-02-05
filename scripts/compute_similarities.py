@@ -87,26 +87,58 @@ def compute_similarity_statistics(
     
     import numpy as np
     
-    return {
-        "mean_pos_similarity": float(np.mean(all_pos_sims)) if all_pos_sims else 0.0,
-        "std_pos_similarity": float(np.std(all_pos_sims)) if all_pos_sims else 0.0,
-        "mean_neg_similarity": float(np.mean(all_neg_sims)) if all_neg_sims else 0.0,
-        "std_neg_similarity": float(np.std(all_neg_sims)) if all_neg_sims else 0.0,
-        "similarity_gap": float(np.mean(all_pos_sims) - np.mean(all_neg_sims)) if all_pos_sims and all_neg_sims else 0.0,
+    # Calcular estatísticas para similaridades positivas
+    pos_stats = {}
+    if all_pos_sims:
+        pos_stats = {
+            "mean_pos_similarity": float(np.mean(all_pos_sims)),
+            "std_pos_similarity": float(np.std(all_pos_sims)),
+            "median_pos_similarity": float(np.median(all_pos_sims)),
+            "q1_pos_similarity": float(np.percentile(all_pos_sims, 25)),
+            "q3_pos_similarity": float(np.percentile(all_pos_sims, 75)),
+            "min_pos_similarity": float(np.min(all_pos_sims)),
+            "max_pos_similarity": float(np.max(all_pos_sims)),
+        }
+    else:
+        pos_stats = {k: 0.0 for k in [
+            "mean_pos_similarity", "std_pos_similarity", "median_pos_similarity",
+            "q1_pos_similarity", "q3_pos_similarity", "min_pos_similarity", "max_pos_similarity"
+        ]}
+    
+    # Calcular estatísticas para similaridades negativas
+    neg_stats = {}
+    if all_neg_sims:
+        neg_stats = {
+            "mean_neg_similarity": float(np.mean(all_neg_sims)),
+            "std_neg_similarity": float(np.std(all_neg_sims)),
+            "median_neg_similarity": float(np.median(all_neg_sims)),
+            "q1_neg_similarity": float(np.percentile(all_neg_sims, 25)),
+            "q3_neg_similarity": float(np.percentile(all_neg_sims, 75)),
+            "min_neg_similarity": float(np.min(all_neg_sims)),
+            "max_neg_similarity": float(np.max(all_neg_sims)),
+        }
+    else:
+        neg_stats = {k: 0.0 for k in [
+            "mean_neg_similarity", "std_neg_similarity", "median_neg_similarity",
+            "q1_neg_similarity", "q3_neg_similarity", "min_neg_similarity", "max_neg_similarity"
+        ]}
+    
+    # Calcular gaps (diferença entre positivos e negativos)
+    gap_stats = {
+        "similarity_gap_mean": pos_stats["mean_pos_similarity"] - neg_stats["mean_neg_similarity"],
+        "similarity_gap_median": pos_stats["median_pos_similarity"] - neg_stats["median_neg_similarity"],
     }
+    
+    return {**pos_stats, **neg_stats, **gap_stats}
 
 
 def process_experiment(experiment_dir: Path, device: torch.device):
     """Processa um experimento e atualiza suas métricas."""
+    from src.models.registry import create_model
+    
     print(f"\n{'='*60}")
     print(f"📊 Processando: {experiment_dir.name}")
     print(f"{'='*60}")
-    
-    # Verificar se existe checkpoint
-    checkpoint_dir = experiment_dir / "checkpoints" / "best"
-    if not checkpoint_dir.exists():
-        print(f"   ⚠️ Checkpoint não encontrado, pulando...")
-        return False
     
     # Carregar config
     config_path = experiment_dir / "config.json"
@@ -117,19 +149,38 @@ def process_experiment(experiment_dir: Path, device: torch.device):
     with open(config_path) as f:
         config_dict = json.load(f)
     
+    # Verificar se é experimento frozen (sem checkpoint)
+    is_frozen = "frozen_eval" in experiment_dir.name or config_dict.get("training", {}).get("epochs", 1) == 0
+    checkpoint_dir = experiment_dir / "checkpoints" / "best"
+    has_checkpoint = checkpoint_dir.exists()
+    
     # Carregar modelo
     print(f"   📦 Carregando modelo...")
     try:
-        # Extrair tipo do modelo do config
         model_type = config_dict.get("model", {}).get("type", "tinyclip")
-        model = load_model_from_experiment(
-            str(experiment_dir), 
-            device=device,
-            model_type=model_type
-        )
+        model_name = config_dict.get("model", {}).get("name", "")
+        
+        if is_frozen or not has_checkpoint:
+            # Experimento frozen ou sem checkpoint: carregar modelo pré-treinado
+            print(f"   🔒 Experimento frozen/sem checkpoint - carregando modelo pré-treinado: {model_name}")
+            model = create_model(
+                model_type=model_type,
+                pretrained_name=model_name,
+                output_attentions=True,
+                device=device
+            )
+        else:
+            # Experimento com fine-tuning: carregar do checkpoint
+            model = load_model_from_experiment(
+                str(experiment_dir), 
+                device=device,
+                model_type=model_type
+            )
         processor = model.processor
     except Exception as e:
         print(f"   ❌ Erro ao carregar modelo: {e}")
+        import traceback
+        traceback.print_exc()
         return False
     
     # Carregar dados de validação
@@ -169,9 +220,12 @@ def process_experiment(experiment_dir: Path, device: torch.device):
     )
     
     print(f"\n   📈 Resultados:")
-    print(f"      Sim+ média: {similarity_stats['mean_pos_similarity']:.4f} (±{similarity_stats['std_pos_similarity']:.4f})")
-    print(f"      Sim- média: {similarity_stats['mean_neg_similarity']:.4f} (±{similarity_stats['std_neg_similarity']:.4f})")
-    print(f"      Gap: {similarity_stats['similarity_gap']:.4f}")
+    print(f"      Sim+ média:   {similarity_stats['mean_pos_similarity']:.4f} (±{similarity_stats['std_pos_similarity']:.4f})")
+    print(f"      Sim+ mediana: {similarity_stats['median_pos_similarity']:.4f} [Q1={similarity_stats['q1_pos_similarity']:.4f}, Q3={similarity_stats['q3_pos_similarity']:.4f}]")
+    print(f"      Sim- média:   {similarity_stats['mean_neg_similarity']:.4f} (±{similarity_stats['std_neg_similarity']:.4f})")
+    print(f"      Sim- mediana: {similarity_stats['median_neg_similarity']:.4f} [Q1={similarity_stats['q1_neg_similarity']:.4f}, Q3={similarity_stats['q3_neg_similarity']:.4f}]")
+    print(f"      Gap (média):   {similarity_stats['similarity_gap_mean']:.4f}")
+    print(f"      Gap (mediana): {similarity_stats['similarity_gap_median']:.4f}")
     
     # Atualizar val_history.json
     val_history_path = experiment_dir / "metrics" / "val_history.json"
@@ -179,15 +233,12 @@ def process_experiment(experiment_dir: Path, device: torch.device):
         with open(val_history_path) as f:
             val_history = json.load(f)
         
-        # Adicionar similaridades a cada entrada (ou à última se for lista)
+        # Adicionar todas as estatísticas a cada entrada
         if isinstance(val_history, list) and len(val_history) > 0:
-            # Adicionar às métricas finais (última época ou única entrada)
             for entry in val_history:
-                entry["val_mean_pos_similarity"] = similarity_stats["mean_pos_similarity"]
-                entry["val_std_pos_similarity"] = similarity_stats["std_pos_similarity"]
-                entry["val_mean_neg_similarity"] = similarity_stats["mean_neg_similarity"]
-                entry["val_std_neg_similarity"] = similarity_stats["std_neg_similarity"]
-                entry["val_similarity_gap"] = similarity_stats["similarity_gap"]
+                # Adicionar todas as métricas com prefixo val_
+                for key, value in similarity_stats.items():
+                    entry[f"val_{key}"] = value
         
         with open(val_history_path, "w") as f:
             json.dump(val_history, f, indent=2)
