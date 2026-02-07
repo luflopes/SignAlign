@@ -64,3 +64,9 @@ tmp/
 temp/
 *.tmp
 cur
+
+# Generated images
+*.png
+*.jpg
+*.jpeg
+*.svg
