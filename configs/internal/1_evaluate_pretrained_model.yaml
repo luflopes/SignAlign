@@ -72,6 +72,6 @@ model:
   freeze_text_encoder: true
   output_attentions: true
 
-# IMPORTANTE: Caminho para carregar o modelo pré-treinado
-pretrained_checkpoint: experiments/clip_vit_b32_combined_tw05/checkpoints/best
+# NOTA: Para carregar o modelo pré-treinado, use:
+# --pretrained-checkpoint experiments/clip_vit_b32_combined_tw05/checkpoints/best
 
