@@ -76,8 +76,18 @@ class Trainer:
         self.train_history: List[Dict] = []
         self.val_history: List[Dict] = []
     
-    def setup(self) -> None:
-        """Configura todos os componentes para treinamento."""
+    def setup(
+        self, 
+        pretrained_checkpoint: Optional[str] = None,
+        val_csv: Optional[str] = None
+    ) -> None:
+        """
+        Configura todos os componentes para treinamento.
+        
+        Args:
+            pretrained_checkpoint: Caminho para checkpoint pré-treinado a ser carregado.
+            val_csv: Caminho para CSV de validação separado.
+        """
         print("=" * 60)
         print(f"🚀 Configurando experimento: {self.config.name}")
         print("=" * 60)
@@ -93,6 +103,10 @@ class Trainer:
         print("\n📦 Carregando modelo...")
         self.model = create_model(self.config.model, self.device)
         self.processor = self.model.get_processor()
+        
+        # 2.1 Carregar checkpoint pré-treinado se fornecido
+        if pretrained_checkpoint:
+            self._load_pretrained_checkpoint(pretrained_checkpoint)
         
         # 3. Loss
         print("\n🎯 Configurando loss...")
@@ -115,27 +129,84 @@ class Trainer:
         
         # 6. Dados
         print("\n📂 Carregando dados...")
-        self._setup_data()
+        self._setup_data(val_csv=val_csv)
         
         print("\n✅ Setup completo!")
         print("=" * 60)
     
-    def _setup_data(self) -> None:
-        """Prepara datasets de treino e validação."""
-        # Carregar pares
-        all_pairs = load_dataset_pairs(
-            self.config.data.dataset_csv,
-            exclude_unknown=self.config.data.exclude_unknown,
-            images_base_path=self.config.data.images_base_path,
-            max_samples=self.config.data.max_samples
-        )
+    def _load_pretrained_checkpoint(self, checkpoint_path: str) -> None:
+        """
+        Carrega pesos de um checkpoint pré-treinado.
         
-        # Split treino/validação
-        self.train_pairs, self.val_pairs = create_train_val_split(
-            all_pairs,
-            val_ratio=self.config.data.val_ratio,
-            seed=self.config.seed
-        )
+        Args:
+            checkpoint_path: Caminho para o diretório do checkpoint.
+        """
+        from transformers import CLIPModel, CLIPProcessor
+        
+        checkpoint_dir = Path(checkpoint_path)
+        
+        if not checkpoint_dir.exists():
+            raise FileNotFoundError(f"Checkpoint não encontrado: {checkpoint_path}")
+        
+        print(f"   📥 Carregando checkpoint: {checkpoint_path}")
+        
+        # Carregar modelo do checkpoint
+        loaded_model = CLIPModel.from_pretrained(checkpoint_dir)
+        
+        # Copiar pesos para o modelo atual
+        self.model.model.load_state_dict(loaded_model.state_dict())
+        
+        # Carregar processor também (por consistência)
+        self.processor = CLIPProcessor.from_pretrained(checkpoint_dir)
+        
+        print(f"   ✅ Checkpoint carregado com sucesso!")
+    
+    def _setup_data(self, val_csv: Optional[str] = None) -> None:
+        """
+        Prepara datasets de treino e validação.
+        
+        Args:
+            val_csv: Caminho para CSV de validação separado (opcional).
+                     Se fornecido, não faz split e usa esse arquivo para validação.
+        """
+        if val_csv:
+            # Usar CSVs separados para treino e validação
+            print(f"   📄 Usando CSV de validação separado: {val_csv}")
+            
+            # Treino
+            self.train_pairs = load_dataset_pairs(
+                self.config.data.dataset_csv,
+                exclude_unknown=self.config.data.exclude_unknown,
+                images_base_path=self.config.data.images_base_path,
+                max_samples=self.config.data.max_samples
+            )
+            
+            # Validação
+            self.val_pairs = load_dataset_pairs(
+                val_csv,
+                exclude_unknown=self.config.data.exclude_unknown,
+                images_base_path=self.config.data.images_base_path,
+                max_samples=None  # Não limitar validação
+            )
+        else:
+            # Carregar pares e fazer split
+            all_pairs = load_dataset_pairs(
+                self.config.data.dataset_csv,
+                exclude_unknown=self.config.data.exclude_unknown,
+                images_base_path=self.config.data.images_base_path,
+                max_samples=self.config.data.max_samples
+            )
+            
+            # Split treino/validação
+            self.train_pairs, self.val_pairs = create_train_val_split(
+                all_pairs,
+                val_ratio=self.config.data.val_ratio,
+                seed=self.config.seed
+            )
+        
+        print(f"📊 Split de dados:")
+        print(f"   - Treino: {len(self.train_pairs)} amostras")
+        print(f"   - Validação: {len(self.val_pairs)} amostras")
         
         # Aviso se poucos dados de validação
         if len(self.val_pairs) < 10:

@@ -117,6 +117,20 @@ def parse_args():
         help="Salva apenas o melhor checkpoint (sobrescreve config)"
     )
     
+    parser.add_argument(
+        "--pretrained-checkpoint",
+        type=str,
+        default=None,
+        help="Caminho para checkpoint pré-treinado a ser carregado"
+    )
+    
+    parser.add_argument(
+        "--val-csv",
+        type=str,
+        default=None,
+        help="CSV separado para validação (para datasets com train/val separados)"
+    )
+    
     return parser.parse_args()
 
 
@@ -177,9 +191,20 @@ def main():
         config.training.save_only_best = True
         print("💾 Salvando apenas o melhor checkpoint")
     
+    # Checkpoint pré-treinado (via CLI ou config)
+    pretrained_checkpoint = args.pretrained_checkpoint
+    if pretrained_checkpoint is None and hasattr(config, 'pretrained_checkpoint'):
+        pretrained_checkpoint = config.pretrained_checkpoint
+    
+    if pretrained_checkpoint:
+        print(f"📦 Carregando checkpoint pré-treinado: {pretrained_checkpoint}")
+    
+    # CSV de validação separado
+    val_csv = args.val_csv
+    
     # Criar e executar trainer
     trainer = Trainer(config)
-    trainer.setup()
+    trainer.setup(pretrained_checkpoint=pretrained_checkpoint, val_csv=val_csv)
     
     # Se eval_only, apenas avaliar sem treinar
     if args.eval_only or config.training.epochs == 0:
