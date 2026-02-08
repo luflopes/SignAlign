@@ -1,12 +1,16 @@
 # Experimento 2: Fine-tuning no dataset interno
 # Mesma arquitetura/configuração do clip_vit_b32_combined_tw05
 # Treina do zero no dataset interno
+#
+# NOTA: O train.csv será dividido internamente em treino/val (85:15)
+#       usando split por indivíduos (id_pessoa) para evitar data leakage.
+#       NÃO usar --val-csv para este experimento!
 
 seed: 5932
 output_dir: experiments/internal
 name: internal_finetune_combined
 
-# Dataset interno - usa train.csv para treino
+# Dataset interno - train.csv será dividido 85:15 por indivíduos
 data:
   dataset_csv: datasets/internal-dataset/train.csv
   images_base_path: datasets/internal-dataset

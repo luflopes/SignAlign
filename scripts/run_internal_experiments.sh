@@ -69,11 +69,13 @@ echo "============================================================"
 echo "   Modelo: CLIP ViT-B/32 (iniciando do zero)"
 echo "   Configuração: Mesma do clip_vit_b32_combined_tw05"
 echo "   Loss: InfoNCE + Triplet (weight=0.5)"
+echo "   Split: 85:15 por indivíduos (do train.csv)"
 echo ""
 
+# NOTA: NÃO passamos --val-csv aqui!
+# O train.csv será dividido internamente 85:15 por indivíduos
 python scripts/run_experiment.py \
     --config configs/internal/2_finetune_internal.yaml \
-    --val-csv datasets/internal-dataset/val.csv \
     $EXTRA_ARGS
 
 echo "✅ Experimento 2 concluído!"
