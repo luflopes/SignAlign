@@ -210,39 +210,39 @@ augmentation:
 
 ### 7.1 RQ1: Fine-tuning vs Frozen
 
-![RQ1 Results](notebooks/article_outputs/img_metrics/rq1_finetuning_impact.png)
+![RQ1 Results](../notebooks/article_outputs/img_metrics/rq1_finetuning_impact.png)
 
 **Conclusão**: Fine-tuning melhora ~15-20% em relação ao modelo frozen.
 
 ### 7.2 RQ2: Comparação de Arquiteturas
 
-![RQ2 Results](notebooks/article_outputs/img_metrics/rq2_architecture_comparison.png)
+![RQ2 Results](../notebooks/article_outputs/img_metrics/rq2_architecture_comparison.png)
 
-**Conclusão**: CLIP ViT-B/32 oferece o melhor desempenho geral.
+**Conclusão**: TinyCLIP oferece o melhor desempenho geral sem treinamento.
 
 ### 7.3 RQ3: Impacto da Triplet Loss
 
-![RQ3 Results](notebooks/article_outputs/img_metrics/rq3_triplet_loss_impact.png)
+![RQ3 Results](../notebooks/article_outputs/img_metrics/rq3_triplet_loss_impact.png)
 
 **Conclusão**: Triplet Loss com peso 0.5 oferece melhor resultado.
 
 ### 7.4 RQ4: Separação de Embeddings
 
-![RQ4 Similarity](notebooks/article_outputs/img_metrics/rq4_similarity_comparison.png)
+![RQ4 Similarity](../notebooks/article_outputs/img_metrics/rq4_similarity_comparison.png)
 
-![RQ4 Gap](notebooks/article_outputs/img_metrics/rq4_similarity_gap.png)
+![RQ4 Gap](../notebooks/article_outputs/img_metrics/rq4_similarity_gap.png)
 
 **Conclusão**: Maior gap correlaciona com melhor acurácia.
 
 ### 7.5 RQ5: Data Augmentation
 
-![RQ5 Results](notebooks/article_outputs/img_metrics/rq5_augmentation_impact.png)
+![RQ5 Results](../notebooks/article_outputs/img_metrics/rq5_augmentation_impact.png)
 
 **Conclusão**: Augmentation melhora consistentemente o desempenho.
 
 ### 7.6 RQ6: Ranking Final
 
-![RQ6 Results](notebooks/article_outputs/img_metrics/rq6_final_ranking.png)
+![RQ6 Results](../notebooks/article_outputs/img_metrics/rq6_final_ranking.png)
 
 **Melhor Configuração**: `clip_vit_b32_combined_tw05`
 - Accuracy@3neg: **93.29%**
@@ -256,19 +256,13 @@ Utilizamos **Grad-ECLIP** para visualizar quais regiões da assinatura o modelo 
 
 ### 8.1 Exemplo: Texto Correto vs Incorreto
 
-![Grad-ECLIP Comparison](notebooks/article_outputs/img_grad/grad_eclip_comparison.png)
-
 **Interpretação**:
 - **Texto Correto**: Alta similaridade, atenção focada na assinatura
 - **Texto Incorreto**: Baixa similaridade, atenção dispersa
 
-### 8.2 Mais Exemplos
-
-| Exemplo 1 | Exemplo 2 |
-|-----------|-----------|
-| ![Ex1](notebooks/article_outputs/img_grad/grad_eclip_comparison_2.png) | ![Ex2](notebooks/article_outputs/img_grad/grad_eclip_comparison_3.png) |
-
----
+![Grad-ECLIP Comparison](../notebooks/article_outputs/img_grad/grad_eclip_comparison_6.png)
+![Ex2](../notebooks/article_outputs/img_grad/grad_eclip_comparison_3.png)
+![Ex1](../notebooks/article_outputs/img_grad/grad_eclip_comparison_2.png)
 
 ## 9. 🎯 Avaliação Prática: Documentos Multi-Assinatura
 
@@ -286,18 +280,19 @@ Documentos reais frequentemente contêm **múltiplas assinaturas**. O desafio é
 
 ### 9.3 Resultados
 
-![Practical Evaluation](notebooks/practical_evaluation_analysis.png)
+![Practical Evaluation](../notebooks/practical_evaluation_analysis.png)
 
 | Métrica | Valor |
 |---------|-------|
-| Accuracy@1 | 78.5% |
-| Accuracy@2 | 89.2% |
-| MRR | 0.87 |
-| Mean Rank | 1.35 |
+| **Accuracy@1** | 99.55% |
+| **Accuracy@2** | 99.96% |
+| **Mean Rank** | 1.00 |
+| **Median Rank** | 1.0 |
+| **MRR** | 0.9977 |
 
 ### 9.4 Exemplo de Recuperação
 
-![Document Retrieval](notebooks/document_retrieval_example.png)
+![Document Retrieval](../notebooks/document_retrieval_example.png)
 
 ---
 
@@ -313,7 +308,7 @@ Documentos reais frequentemente contêm **múltiplas assinaturas**. O desafio é
 
 ### 10.2 Resultados
 
-![Internal Comparison](notebooks/article_outputs/internal_comparison.png)
+![Internal Comparison](../notebooks/article_outputs/internal_comparison.png)
 
 **Conclusões**:
 - Modelo pré-treinado generaliza razoavelmente

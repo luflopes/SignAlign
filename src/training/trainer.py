@@ -22,11 +22,13 @@ from src.data.augmentations import get_train_transform, get_val_transform
 from src.data.batch_builder import (
     load_dataset_pairs,
     create_train_val_split,
+    create_train_val_test_split_from_file,
     build_unique_name_batches,
     create_fixed_evaluation_data,
 )
 from src.training.scheduler import create_scheduler
 from src.evaluation.metrics import compute_all_metrics
+from src.evaluation.test_analysis import evaluate_test_multiple_negatives
 from src.utils.logging import ExperimentLogger
 from src.utils.seed import set_seed, get_device
 
@@ -67,7 +69,9 @@ class Trainer:
         # Dados
         self.train_pairs: List[Tuple[str, str]] = []
         self.val_pairs: List[Tuple[str, str]] = []
+        self.test_pairs: List[Tuple[str, str]] = []
         self.fixed_eval_data: Dict = {}
+        self.fixed_test_eval_data: Dict = {}
         
         # Estado do treinamento
         self.current_epoch = 0
@@ -163,14 +167,33 @@ class Trainer:
     
     def _setup_data(self, val_csv: Optional[str] = None) -> None:
         """
-        Prepara datasets de treino e validação.
+        Prepara datasets de treino, validação e teste.
         
         Args:
-            val_csv: Caminho para CSV de validação separado (opcional).
+            val_csv: Caminho para CSV de validação separado (opcional, modo legado).
                      Se fornecido, não faz split e usa esse arquivo para validação.
         """
-        if val_csv:
-            # Usar CSVs separados para treino e validação
+        # Verificar se deve usar split fixo (v2)
+        use_fixed_split = (
+            self.config.data.split_path is not None and 
+            Path(self.config.data.split_path).exists() and
+            val_csv is None
+        )
+        
+        if use_fixed_split:
+            # Usar split fixo (preferido)
+            print(f"   📂 Usando split fixo: {self.config.data.split_path}")
+            
+            self.train_pairs, self.val_pairs, self.test_pairs = create_train_val_test_split_from_file(
+                csv_path=self.config.data.dataset_csv,
+                split_path=self.config.data.split_path,
+                images_base_path=self.config.data.images_base_path,
+                exclude_unknown=self.config.data.exclude_unknown,
+                max_samples=self.config.data.max_samples
+            )
+            
+        elif val_csv:
+            # Usar CSVs separados para treino e validação (modo legado)
             print(f"   📄 Usando CSV de validação separado: {val_csv}")
             
             # Treino
@@ -186,10 +209,16 @@ class Trainer:
                 val_csv,
                 exclude_unknown=self.config.data.exclude_unknown,
                 images_base_path=self.config.data.images_base_path,
-                max_samples=None  # Não limitar validação
+                max_samples=None
             )
+            
+            # Sem conjunto de teste no modo legado
+            self.test_pairs = []
+            
         else:
-            # Carregar pares e fazer split
+            # Split dinâmico (modo legado)
+            print(f"   ⚠️ Usando split dinâmico (legado). Considere usar split fixo.")
+            
             all_pairs = load_dataset_pairs(
                 self.config.data.dataset_csv,
                 exclude_unknown=self.config.data.exclude_unknown,
@@ -203,21 +232,33 @@ class Trainer:
                 val_ratio=self.config.data.val_ratio,
                 seed=self.config.seed
             )
+            
+            # Sem conjunto de teste no modo legado
+            self.test_pairs = []
         
-        print(f"📊 Split de dados:")
-        print(f"   - Treino: {len(self.train_pairs)} amostras")
-        print(f"   - Validação: {len(self.val_pairs)} amostras")
+        print(f"\n📊 Resumo dos dados:")
+        print(f"   - Treino:     {len(self.train_pairs):5d} amostras")
+        print(f"   - Validação:  {len(self.val_pairs):5d} amostras")
+        print(f"   - Teste:      {len(self.test_pairs):5d} amostras")
         
         # Aviso se poucos dados de validação
         if len(self.val_pairs) < 10:
             print(f"⚠️ AVISO: Apenas {len(self.val_pairs)} amostras de validação. Métricas podem ser imprecisas.")
         
-        # Criar dados fixos de avaliação
+        # Criar dados fixos de avaliação para validação
         self.fixed_eval_data = create_fixed_evaluation_data(
             self.val_pairs,
             max_negative_samples=max(self.config.evaluation.negative_samples),
             seed=self.config.seed
         )
+        
+        # Criar dados fixos de avaliação para teste
+        if self.test_pairs:
+            self.fixed_test_eval_data = create_fixed_evaluation_data(
+                self.test_pairs,
+                max_negative_samples=max(self.config.evaluation.negative_samples),
+                seed=self.config.seed
+            )
     
     def train(self) -> Dict[str, Any]:
         """
@@ -317,13 +358,25 @@ class Trainer:
                     print(f"\n⚠️ Early stopping após {epochs_without_improvement} épocas sem melhoria.")
                     break
         
+        # Avaliar no conjunto de teste (se disponível)
+        test_metrics = {}
+        if self.test_pairs:
+            print("\n" + "=" * 60)
+            print("🧪 Avaliando no conjunto de TESTE...")
+            print("=" * 60)
+            
+            test_metrics = self._evaluate_test(val_transform)
+        
         # Finalizar
         self.logger.finalize()
         
         print("\n" + "=" * 60)
         print("🏁 Treinamento finalizado!")
         print(f"   Melhor época: {self.best_epoch}")
-        print(f"   Melhor accuracy: {self.best_metric:.4f}")
+        print(f"   Melhor accuracy (val): {self.best_metric:.4f}")
+        if test_metrics:
+            test_acc = test_metrics.get("accuracy_3_neg", test_metrics.get("accuracy", 0))
+            print(f"   Accuracy (test): {test_acc:.4f}")
         print("=" * 60)
         
         return {
@@ -331,6 +384,7 @@ class Trainer:
             "best_metric": self.best_metric,
             "train_history": self.train_history,
             "val_history": self.val_history,
+            "test_metrics": test_metrics,
         }
     
     def _train_epoch(
@@ -490,14 +544,29 @@ class Trainer:
             lr=0.0
         )
         
+        # Avaliar no conjunto de teste (se disponível)
+        test_metrics = {}
+        if self.test_pairs:
+            print("\n" + "=" * 60)
+            print("🧪 Avaliando no conjunto de TESTE...")
+            print("=" * 60)
+            
+            test_metrics = self._evaluate_test(val_transform)
+        
         # Finalizar
         self.logger.finalize()
         
         # Print resumo
-        print("\n📈 Métricas de Avaliação:")
+        print("\n📈 Métricas de Avaliação (Validação):")
         for key, value in sorted(all_metrics.items()):
             if isinstance(value, float):
                 print(f"   {key}: {value:.4f}")
+        
+        if test_metrics:
+            print("\n📈 Métricas de Teste:")
+            for key, value in sorted(test_metrics.items()):
+                if isinstance(value, float):
+                    print(f"   {key}: {value:.4f}")
         
         print("\n" + "=" * 60)
         print("✅ Avaliação concluída!")
@@ -507,6 +576,7 @@ class Trainer:
             "best_epoch": 0,
             "best_metric": val_metrics.get("accuracy_3_neg", 0.0),
             "val_metrics": all_metrics,
+            "test_metrics": test_metrics,
             "train_history": [],
             "val_history": [all_metrics],
         }
@@ -575,6 +645,36 @@ class Trainer:
             "similarity_gap": float(np.mean(all_pos_sims) - np.mean(all_neg_sims)) if all_pos_sims and all_neg_sims else 0.0,
         }
     
+    def _evaluate_test(self, transform) -> Dict[str, float]:
+        """
+        Avalia no conjunto de teste e salva resultados detalhados.
+        
+        Returns:
+            Dicionário com métricas de teste.
+        """
+        self.model.model.eval()
+        
+        # Diretório de saída para resultados de teste
+        test_output_dir = self.logger.get_output_dir() / "metrics"
+        
+        # Avaliar com múltiplos números de negativos
+        test_metrics = evaluate_test_multiple_negatives(
+            model=self.model,
+            processor=self.processor,
+            test_pairs=self.test_pairs,
+            output_dir=str(test_output_dir),
+            device=self.device,
+            transform=transform,
+            image_size=self.config.model.image_size,
+            negative_samples_list=self.config.evaluation.negative_samples,
+            seed=self.config.seed
+        )
+        
+        # Log das métricas de teste
+        self.logger.log_test_metrics(test_metrics)
+        
+        return test_metrics
+    
     def get_model(self) -> BaseMultimodalModel:
         """Retorna o modelo treinado."""
         return self.model
@@ -582,4 +682,8 @@ class Trainer:
     def get_best_checkpoint_path(self) -> Path:
         """Retorna caminho do melhor checkpoint."""
         return self.logger.get_output_dir() / "checkpoints" / "best"
+    
+    def get_test_pairs(self) -> List[Tuple[str, str]]:
+        """Retorna pares de teste."""
+        return self.test_pairs
 

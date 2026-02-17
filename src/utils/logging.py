@@ -224,6 +224,29 @@ class ExperimentLogger:
         
         print(f"✅ Experimento finalizado. Resultados em: {self.output_dir}")
     
+    def log_test_metrics(self, test_metrics: Dict[str, float]) -> None:
+        """
+        Salva métricas do conjunto de teste.
+        
+        Args:
+            test_metrics: Dicionário com métricas de teste.
+        """
+        test_path = self.metrics_dir / "test_metrics.json"
+        
+        with open(test_path, "w") as f:
+            json.dump(convert_to_serializable(test_metrics), f, indent=2)
+        
+        # Atualizar metadata
+        self.metadata["test_metrics"] = convert_to_serializable(test_metrics)
+        
+        # Log no TensorBoard
+        if self.writer:
+            for key, value in test_metrics.items():
+                if isinstance(value, (int, float)):
+                    self.writer.add_scalar(f"test/{key}", value, 0)
+        
+        print(f"📊 Métricas de teste salvas em: {test_path}")
+    
     def get_output_dir(self) -> Path:
         """Retorna diretório de saída."""
         return self.output_dir

@@ -113,9 +113,13 @@ class DataConfig:
     dataset_csv: str = "datasets/dataset-sign-align/dataset.csv"
     images_base_path: str = ""  # Se vazio, usa caminhos absolutos do CSV
     
-    # Split
-    train_ratio: float = 0.85
-    val_ratio: float = 0.15
+    # Split fixo (v2) - preferir usar split_path
+    split_path: Optional[str] = "datasets/dataset-sign-align/splits/split_v2.json"
+    
+    # Split dinâmico (legado) - usado apenas se split_path for None
+    train_ratio: float = 0.75
+    val_ratio: float = 0.10
+    test_ratio: float = 0.15
     
     # Batching
     batch_size: int = 8
@@ -156,7 +160,7 @@ class TrainingConfig:
     """Configuração de treinamento."""
     
     # Hiperparâmetros
-    epochs: int = 20
+    epochs: int = 30  # Atualizado de 20 para 30
     learning_rate: float = 1e-6
     weight_decay: float = 0.01
     max_grad_norm: float = 1.0

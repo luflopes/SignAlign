@@ -1,26 +1,18 @@
-# Experimento 1: Avaliar modelo pré-treinado no dataset interno
-# Usa o melhor modelo treinado no dataset original (clip_vit_b32_combined_tw05)
-# SEM treinamento adicional - apenas avaliação
-
 seed: 5932
 output_dir: experiments/internal
 name: internal_eval_pretrained
-
-# Dataset interno
 data:
-  # Usamos val.csv já que queremos apenas avaliar
   dataset_csv: datasets/internal-dataset/val.csv
   images_base_path: datasets/internal-dataset
-  train_ratio: 0.0  # Não vamos treinar
-  val_ratio: 1.0    # Todo o dataset é para validação
+  train_ratio: 0.0
+  val_ratio: 1.0
   batch_size: 32
   num_workers: 4
-  exclude_unknown: false  # Dataset interno não tem UNKNOWN
+  exclude_unknown: false
   max_samples: null
   augmentation:
     enabled: false
-
-# Sem treinamento
+  split_path: datasets/dataset-sign-align/splits/split_v2.json
 training:
   epochs: 0
   learning_rate: 1.0e-06
@@ -38,7 +30,6 @@ training:
     patience: 3
     min_lr: 1.0e-08
     mode: max
-
 evaluation:
   negative_samples:
   - 1
@@ -55,7 +46,6 @@ evaluation:
   compute_ndcg: true
   num_visualization_samples: 10
   save_attention_maps: true
-
 loss:
   primary_loss: infonce
   temperature: 0.07
@@ -63,7 +53,6 @@ loss:
   triplet_weight: 0.5
   triplet_margin: 0.2
   sigmoid_bias: -10.0
-
 model:
   name: openai/clip-vit-base-patch32
   type: clip
@@ -71,7 +60,3 @@ model:
   freeze_vision_encoder: true
   freeze_text_encoder: true
   output_attentions: true
-
-# NOTA: Para carregar o modelo pré-treinado, use:
-# --pretrained-checkpoint experiments/clip_vit_b32_combined_tw05/checkpoints/best
-

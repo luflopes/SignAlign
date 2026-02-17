@@ -1,0 +1,19 @@
+
+\begin{table}[htbp]
+\centering
+\caption{Resultados no Dataset Interno}
+\label{tab:internal_results}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Experimento} & \textbf{Acc@1} & \textbf{Acc@2} & \textbf{Acc@3} & \textbf{Sim+} & \textbf{Gap} \\
+\midrule
+Fine-tuning Específico & 0.8936 & 0.8723 & \textbf{0.8298} & 0.2818 & 0.2130 \\
+Modelo Pré-treinado$^*$ & 0.8331 & 0.7560 & 0.6950 & 0.2870 & 0.1420 \\
+CLIP Frozen (baseline) & 0.6758 & 0.5313 & 0.4543 & 0.2308 & 0.0141 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item $^*$ Modelo treinado no dataset original (clip\_vit\_b32\_combined\_tw05)
+\end{tablenotes}
+\end{table}

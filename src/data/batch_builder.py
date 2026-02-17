@@ -3,10 +3,14 @@ Construção de batches para treinamento contrastivo.
 
 Garante que cada batch tenha nomes únicos para evitar
 problemas com a loss contrastiva.
+
+Suporta split fixo (v2) com treino/validação/teste.
 """
 
 from collections import defaultdict
-from typing import List, Tuple, Dict
+from pathlib import Path
+from typing import List, Tuple, Dict, Optional
+import json
 import random
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -50,6 +54,121 @@ def load_dataset_pairs(
     return pairs
 
 
+def load_split_file(split_path: str) -> Dict:
+    """
+    Carrega arquivo de split JSON.
+    
+    Args:
+        split_path: Caminho para o arquivo JSON do split.
+        
+    Returns:
+        Dicionário com dados do split.
+    """
+    with open(split_path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def load_pairs_from_split(
+    csv_path: str,
+    split_path: str,
+    split_name: str,
+    images_base_path: str = "",
+    exclude_unknown: bool = True,
+    max_samples: Optional[int] = None
+) -> List[Tuple[str, str]]:
+    """
+    Carrega pares para um conjunto específico do split fixo.
+    
+    Args:
+        csv_path: Caminho para o CSV do dataset.
+        split_path: Caminho para o JSON do split.
+        split_name: Nome do conjunto ("train", "val", "test").
+        images_base_path: Prefixo para caminhos de imagem.
+        exclude_unknown: Se True, exclui UNKNOWN.
+        max_samples: Limita número de amostras (modo teste).
+        
+    Returns:
+        Lista de tuplas (caminho_imagem, nome).
+    """
+    # Carregar split
+    split_data = load_split_file(split_path)
+    
+    # Obter indivíduos do conjunto
+    key = f"{split_name}_individuals"
+    if key not in split_data:
+        raise ValueError(f"Conjunto '{split_name}' não encontrado no split")
+    
+    individuals_set = set(split_data[key])
+    
+    # Carregar CSV
+    df = pd.read_csv(csv_path)
+    
+    if exclude_unknown:
+        df = df[df["human_name"] != "UNKNOWN"].reset_index(drop=True)
+    
+    # Filtrar por indivíduos
+    df_filtered = df[df["human_name"].isin(individuals_set)]
+    
+    # Modo teste
+    if max_samples is not None and max_samples > 0:
+        df_filtered = df_filtered.head(max_samples)
+        print(f"⚠️ MODO TESTE: Usando apenas {len(df_filtered)} amostras de {split_name}")
+    
+    # Criar pares
+    pairs = []
+    for _, row in df_filtered.iterrows():
+        img_path = row["image_path"]
+        if images_base_path:
+            img_path = f"{images_base_path}/{img_path}"
+        pairs.append((img_path, row["human_name"]))
+    
+    return pairs
+
+
+def create_train_val_test_split_from_file(
+    csv_path: str,
+    split_path: str,
+    images_base_path: str = "",
+    exclude_unknown: bool = True,
+    max_samples: Optional[int] = None
+) -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]], List[Tuple[str, str]]]:
+    """
+    Carrega split fixo de treino/validação/teste de arquivo.
+    
+    Args:
+        csv_path: Caminho para o CSV do dataset.
+        split_path: Caminho para o JSON do split.
+        images_base_path: Prefixo para caminhos de imagem.
+        exclude_unknown: Se True, exclui UNKNOWN.
+        max_samples: Limita número de amostras (modo teste).
+        
+    Returns:
+        Tupla (train_pairs, val_pairs, test_pairs).
+    """
+    train_pairs = load_pairs_from_split(
+        csv_path, split_path, "train",
+        images_base_path, exclude_unknown, max_samples
+    )
+    val_pairs = load_pairs_from_split(
+        csv_path, split_path, "val",
+        images_base_path, exclude_unknown, None  # Não limitar val/test
+    )
+    test_pairs = load_pairs_from_split(
+        csv_path, split_path, "test",
+        images_base_path, exclude_unknown, None
+    )
+    
+    # Carregar estatísticas do split
+    split_data = load_split_file(split_path)
+    
+    print(f"📊 Split carregado de: {split_path}")
+    print(f"   - Treino:     {len(train_pairs):5d} amostras ({len(split_data['train_individuals']):4d} indivíduos)")
+    print(f"   - Validação:  {len(val_pairs):5d} amostras ({len(split_data['val_individuals']):4d} indivíduos)")
+    print(f"   - Teste:      {len(test_pairs):5d} amostras ({len(split_data['test_individuals']):4d} indivíduos)")
+    
+    return train_pairs, val_pairs, test_pairs
+
+
 def create_train_val_split(
     pairs: List[Tuple[str, str]],
     val_ratio: float = 0.15,
@@ -57,6 +176,8 @@ def create_train_val_split(
 ) -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]]]:
     """
     Divide pares em treino/validação por nome (não por amostra).
+    
+    DEPRECATED: Use create_train_val_test_split_from_file() com split fixo.
     
     Garante que assinaturas do mesmo indivíduo não apareçam
     em ambos os conjuntos.
@@ -97,7 +218,7 @@ def create_train_val_split(
         for img in by_name[name]
     ]
     
-    print(f"📊 Split de dados:")
+    print(f"📊 Split de dados (legado):")
     print(f"   - Treino: {len(train_pairs)} amostras ({len(train_names)} indivíduos)")
     print(f"   - Validação: {len(val_pairs)} amostras ({len(val_names)} indivíduos)")
     

@@ -1,11 +1,6 @@
-# Experimento 3: CLIP ViT-32 Frozen (baseline)
-# Avalia o CLIP original sem nenhum treinamento no dataset interno
-
 seed: 5932
 output_dir: experiments/internal
 name: internal_clip_frozen
-
-# Dataset interno
 data:
   dataset_csv: datasets/internal-dataset/val.csv
   images_base_path: datasets/internal-dataset
@@ -17,8 +12,7 @@ data:
   max_samples: null
   augmentation:
     enabled: false
-
-# Sem treinamento
+  split_path: datasets/dataset-sign-align/splits/split_v2.json
 training:
   epochs: 0
   learning_rate: 1.0e-06
@@ -36,7 +30,6 @@ training:
     patience: 3
     min_lr: 1.0e-08
     mode: max
-
 evaluation:
   negative_samples:
   - 1
@@ -53,7 +46,6 @@ evaluation:
   compute_ndcg: true
   num_visualization_samples: 10
   save_attention_maps: true
-
 loss:
   primary_loss: infonce
   temperature: 0.07
@@ -61,7 +53,6 @@ loss:
   triplet_weight: 0.0
   triplet_margin: 0.2
   sigmoid_bias: -10.0
-
 model:
   name: openai/clip-vit-base-patch32
   type: clip
@@ -69,4 +60,3 @@ model:
   freeze_vision_encoder: true
   freeze_text_encoder: true
   output_attentions: true
-
