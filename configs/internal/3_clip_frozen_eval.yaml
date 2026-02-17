@@ -12,7 +12,7 @@ data:
   max_samples: null
   augmentation:
     enabled: false
-  split_path: datasets/dataset-sign-align/splits/split_v2.json
+  split_path: data/splits/split_v2.json
 training:
   epochs: 0
   learning_rate: 1.0e-06

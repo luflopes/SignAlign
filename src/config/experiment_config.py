@@ -114,7 +114,8 @@ class DataConfig:
     images_base_path: str = ""  # Se vazio, usa caminhos absolutos do CSV
     
     # Split fixo (v2) - preferir usar split_path
-    split_path: Optional[str] = "datasets/dataset-sign-align/splits/split_v2.json"
+    # O split está versionado em data/splits/ e também copiado para datasets/
+    split_path: Optional[str] = "data/splits/split_v2.json"
     
     # Split dinâmico (legado) - usado apenas se split_path for None
     train_ratio: float = 0.75

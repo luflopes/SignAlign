@@ -42,7 +42,7 @@ data:
     blur_noise_p: 0.2
     color_p: 0.2
     compression_p: 0.2
-  split_path: datasets/dataset-sign-align/splits/split_v2.json
+  split_path: data/splits/split_v2.json
   test_ratio: 0.15
 training:
   epochs: 0
