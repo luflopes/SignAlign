@@ -21,6 +21,13 @@ O dataset foi construído a partir de múltiplas fontes públicas:
 
 **Total: ~4.500 pares (imagem, nome)**
 
+**Exemplos de documentos com multiplas assinaturas**:
+
+![Dataset Human x LLM](../notebooks/article_outputs/img_dataset/multi_signature_documents.png)
+
+**Amostra de assinaturas extraídas dos documentos:**
+
+![Dataset Human x LLM](../notebooks/article_outputs/img_dataset/dataset_grid_3x5.png)
 ### 1.2 Estrutura do CSV
 
 ```csv
@@ -63,22 +70,27 @@ rotulacao/
 - Permite aceitar, corrigir ou rejeitar
 - Salva o ground truth (`human_name`)
 
-### 2.3 Exemplos de Assinaturas Rejeitadas
+### 2.3 Comparação: LLM vs Humano
 
-Algumas assinaturas foram rejeitadas por serem ilegíveis ou não conterem nome identificável:
+| Métrica | Valor |
+|---------|-------|
+| Concordância LLM-Humano | ~40.9% |
+| Correções necessárias | ~59.1% |
+
+Abaixo, é exibido um exemplo em que para uma assinatura da mesma pessoa em diferentes imagens, o LLM retorna nomes diferentes causando inconsistência no dataset.
+
+![Dataset Human x LLM](../notebooks/article_outputs/img_dataset/human_vs_llm_divergence_table.png)
+
+### 2.4 Exemplos de Assinaturas Rejeitadas
+
+Parte das assinaturas foram rejeitadas por serem ilegíveis ou não conterem nome identificável. Esta porção representa **19.70%** de todo o dataset.
 
 | Exemplo | Motivo |
 |---------|--------|
 | ![Rejected 1](../rotulacao/rejected/X_033/X_033_sign1.png) | Assinatura ilegível |
 | ![Rejected 2](../rotulacao/rejected/X_020/X_020_sign2.png) | Não é uma assinatura |
 
-### 2.4 Comparação: LLM vs Humano
 
-| Métrica | Valor |
-|---------|-------|
-| Concordância LLM-Humano | ~65% |
-| Correções necessárias | ~30% |
-| Rejeitados | ~5% |
 
 **Conclusão**: O LLM é útil como primeira passagem, mas revisão humana é essencial.
 
@@ -90,9 +102,9 @@ Algumas assinaturas foram rejeitadas por serem ilegíveis ou não conterem nome 
 
 | Modelo | Parâmetros | Encoder Visual | Encoder Textual |
 |--------|------------|----------------|-----------------|
-| **CLIP ViT-B/32** | 151M | ViT-B/32 | Transformer |
 | **TinyCLIP** | 63M | ViT-B/32 (destilado) | Transformer |
-| **SigLIP** | 400M | ViT-B/16 | Transformer |
+| **CLIP ViT-B/32** | 151M | ViT-B/32 | Transformer |
+| **SigLIP** | 203M | ViT-B/16 | Transformer |
 
 ### 3.2 Pré-processamento de Imagens
 
@@ -157,7 +169,7 @@ Com $\lambda \in \{0.1, 0.2, 0.3, 0.4, 0.5\}$ (triplet_weight).
 |-----------|-------|
 | Learning Rate | 1e-6 |
 | Batch Size | 32 |
-| Épocas | 20 |
+| Épocas | 30 |
 | Otimizador | AdamW |
 | Weight Decay | 0.01 |
 | Scheduler | ReduceLROnPlateau |
@@ -175,12 +187,19 @@ augmentation:
   brightness_limit: [-0.2, 0.2]
   contrast_limit: [-0.2, 0.2]
 ```
+![Augumentation](../notebooks/article_outputs/img_dataset/data_augmentations_table.png)
+
 
 ### 5.3 Split de Dados
 
-- **Treino**: 85% (~3.155 amostras)
-- **Validação**: 15% (~492 amostras)
-- **Split por indivíduo**: Garante que assinaturas do mesmo indivíduo não apareçam em treino e validação
+| Conjunto     | Percentual | Nº de Amostras (~) | Nº de Indivíduos |
+|--------------|------------|-------------------|-------------------|
+| Treino       | 73,9%      | 2.695             | 563               |
+| Validação    | 10,6%      | 385               | 75                |
+| Teste        | 15,5%      | 385               | 115               |
+
+
+- **Split por indivíduo e por frequência**: Garante que assinaturas do mesmo indivíduo não apareçam em dois conjuntos distintos. Além disso, indivíduos com maior frequencia no dataset foram distribuídos entre os conjuntos.
 
 ---
 
@@ -216,19 +235,17 @@ augmentation:
 
 ### 7.2 RQ2: Comparação de Arquiteturas
 
-![RQ2 Results](../notebooks/article_outputs/img_metrics/rq2_architecture_comparison.png)
+![RQ2 Results](../notebooks/article_outputs/img_metrics/rq2_architecture_comparison_test.png)
 
 **Conclusão**: TinyCLIP oferece o melhor desempenho geral sem treinamento.
 
 ### 7.3 RQ3: Impacto da Triplet Loss
 
-![RQ3 Results](../notebooks/article_outputs/img_metrics/rq3_triplet_loss_impact.png)
+![RQ3 Results](../notebooks/article_outputs/img_metrics/rq3_triplet_loss_impact_test.png)
 
-**Conclusão**: Triplet Loss com peso 0.5 oferece melhor resultado.
+**Conclusão**: Triplet Loss com peso 0.2 e 0.5 oferecem os melhores resultado.
 
 ### 7.4 RQ4: Separação de Embeddings
-
-![RQ4 Similarity](../notebooks/article_outputs/img_metrics/rq4_similarity_comparison.png)
 
 ![RQ4 Gap](../notebooks/article_outputs/img_metrics/rq4_similarity_gap.png)
 
@@ -236,17 +253,17 @@ augmentation:
 
 ### 7.5 RQ5: Data Augmentation
 
-![RQ5 Results](../notebooks/article_outputs/img_metrics/rq5_augmentation_impact.png)
+![RQ5 Results](../notebooks/article_outputs/img_metrics/rq5_augmentation_impact_test.png)
 
 **Conclusão**: Augmentation melhora consistentemente o desempenho.
 
 ### 7.6 RQ6: Ranking Final
 
-![RQ6 Results](../notebooks/article_outputs/img_metrics/rq6_final_ranking.png)
+![RQ6 Results](../notebooks/article_outputs/img_metrics/rq6_final_ranking_test.png)
 
-**Melhor Configuração**: `clip_vit_b32_combined_tw05`
-- Accuracy@3neg: **93.29%**
-- Similarity Gap: **0.15**
+**Melhor Configuração**: `clip_vit_b32_combined_tw02`
+- Accuracy@3neg: **97.39%**
+- Similarity Gap: **0.43**
 
 ---
 
@@ -270,6 +287,10 @@ Utilizamos **Grad-ECLIP** para visualizar quais regiões da assinatura o modelo 
 
 Documentos reais frequentemente contêm **múltiplas assinaturas**. O desafio é: dado um nome, recuperar a assinatura correta.
 
+**Exemplos de documentos com multiplas assinaturas**:
+
+![Dataset Human x LLM](../notebooks/article_outputs/img_dataset/multi_signature_documents.png)
+
 ### 9.2 Metodologia
 
 1. Filtrar documentos com 2+ assinaturas (não-UNKNOWN)
@@ -284,11 +305,11 @@ Documentos reais frequentemente contêm **múltiplas assinaturas**. O desafio é
 
 | Métrica | Valor |
 |---------|-------|
-| **Accuracy@1** | 99.55% |
-| **Accuracy@2** | 99.96% |
-| **Mean Rank** | 1.00 |
+| **Accuracy@1** | 98.36% |
+| **Accuracy@2** | 99.93% |
+| **Mean Rank** | 1.02 |
 | **Median Rank** | 1.0 |
-| **MRR** | 0.9977 |
+| **MRR** | 0.9917 |
 
 ### 9.4 Exemplo de Recuperação
 
@@ -306,7 +327,31 @@ Documentos reais frequentemente contêm **múltiplas assinaturas**. O desafio é
 | **Finetuned** | Fine-tuning específico no dataset interno |
 | **Frozen** | CLIP original sem treinamento |
 
-### 10.2 Resultados
+
+### 10.2 Estatísticas Gerais — Dataset Interno
+
+| Métrica                     | Valor |
+|------------------------------|-------|
+| Total de amostras            | 2.272 |
+| Indivíduos únicos            | 623   |
+
+---
+
+### 10.3 Distribuição de Assinaturas por Pessoa
+
+| Métrica   | Valor |
+|-----------|--------|
+| Mínimo    | 1      |
+| Máximo    | 83     |
+| Média     | 3,6    |
+| Mediana   | 2,0    |
+
+
+### 10.4 Exemplos de Assinaturas do Dataset Interno
+
+![Internal Dataset](../notebooks/article_outputs/img_dataset/internal_dataset_anonymized.png)
+
+### 10.5 Resultados
 
 ![Internal Comparison](../notebooks/article_outputs/internal_comparison.png)
 
@@ -316,35 +361,15 @@ Documentos reais frequentemente contêm **múltiplas assinaturas**. O desafio é
 - Baseline frozen tem desempenho limitado
 
 ---
-
-## 11. 📁 Estrutura do Repositório
-
-```
-SigAlignGit/
-├── configs/              # Configurações YAML dos experimentos
-│   ├── grid/            # Grid de experimentos (40 configurações)
-│   └── internal/        # Experimentos no dataset interno
-├── datasets/            # Dados (não versionados)
-├── experiments/         # Resultados dos experimentos
-├── notebooks/           # Análises e visualizações
-│   └── article_outputs/ # Imagens para o artigo
-├── rotulacao/           # Ferramenta de rotulação
-├── scripts/             # Scripts de execução
-└── src/                 # Código fonte
-    ├── config/          # Configurações
-    ├── data/            # Dataset e augmentation
-    ├── evaluation/      # Métricas
-    ├── losses/          # Funções de perda
-    ├── models/          # Wrappers dos modelos
-    ├── training/        # Trainer
-    └── utils/           # Utilitários
-```
-
 ---
 
-## 12. 🚀 Como Reproduzir
+## 11. Eficiência dos Modelos
+Aqui preciso incluir as configurações de hardware do servidor Tarkin
+![Internal Comparison](../notebooks/article_outputs/img_efficiency/architecture_efficiency_comparison.png)
 
-### 12.1 Instalação
+## 11. 🚀 Como Reproduzir
+
+### 11.1 Instalação
 
 ```bash
 git clone https://github.com/luflopes/SignAlign.git
@@ -354,19 +379,19 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 12.2 Executar Grid de Experimentos
+### 11.2 Executar Grid de Experimentos
 
 ```bash
 bash scripts/run_all_experiments.sh
 ```
 
-### 12.3 Executar Experimento Específico
+### 11.3 Executar Experimento Específico
 
 ```bash
 python scripts/run_experiment.py --config configs/grid/clip_vit_b32_combined_tw05.yaml
 ```
 
-### 12.4 Análise de Resultados
+### 11.4 Análise de Resultados
 
 ```bash
 jupyter notebook notebooks/analysis.ipynb
@@ -374,7 +399,7 @@ jupyter notebook notebooks/analysis.ipynb
 
 ---
 
-## 13. 📝 Conclusões
+## 12. 📝 Conclusões
 
 1. **Fine-tuning é essencial**: Modelos frozen têm desempenho limitado para este domínio específico.
 
@@ -386,11 +411,11 @@ jupyter notebook notebooks/analysis.ipynb
 
 5. **Pré-processamento consistente é crítico**: O mesmo pipeline deve ser usado em treino e inferência.
 
-6. **Transferência de domínio funciona**: Modelo treinado no dataset público generaliza para dados internos.
+6. **Transferência de domínio funciona**: Modelo treinado no dataset público generaliza para dados internos embora com menor performance.
 
 ---
 
-## 14. 📚 Referências
+## 13. 📚 Referências
 
 - [CLIP: Learning Transferable Visual Models](https://arxiv.org/abs/2103.00020)
 - [TinyCLIP: CLIP Distillation via Affinity Mimicking](https://arxiv.org/abs/2309.12314)
