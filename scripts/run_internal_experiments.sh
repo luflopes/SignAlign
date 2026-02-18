@@ -40,22 +40,22 @@ echo ""
 echo "============================================================"
 echo "🔬 EXPERIMENTO 1: Avaliar modelo pré-treinado no dataset interno"
 echo "============================================================"
-echo "   Modelo: clip_vit_b32_combined_tw05 (treinado no dataset original)"
+echo "   Modelo: clip_vit_b32_combined_tw02 (treinado no dataset original)"
 echo "   Modo: Apenas avaliação (sem treino)"
 echo ""
 
 # Verificar se o checkpoint existe
-if [ -d "experiments/clip_vit_b32_combined_tw05/checkpoints/best" ]; then
+if [ -d "experiments/clip_vit_b32_combined_tw02/checkpoints/best" ]; then
     python scripts/run_experiment.py \
         --config configs/internal/1_evaluate_pretrained_model.yaml \
-        --pretrained-checkpoint experiments/clip_vit_b32_combined_tw05/checkpoints/best \
+        --pretrained-checkpoint experiments/clip_vit_b32_combined_tw02/checkpoints/best \
         --val-csv datasets/internal-dataset/val.csv \
         --eval-only \
         $EXTRA_ARGS
     echo "✅ Experimento 1 concluído!"
 else
     echo "⚠️ AVISO: Checkpoint do modelo pré-treinado não encontrado!"
-    echo "   Esperado: experiments/clip_vit_b32_combined_tw05/checkpoints/best"
+    echo "   Esperado: experiments/clip_vit_b32_combined_tw02/checkpoints/best"
     echo "   Pulando experimento 1..."
 fi
 
@@ -67,7 +67,7 @@ echo "============================================================"
 echo "🏋️ EXPERIMENTO 2: Fine-tuning no dataset interno"
 echo "============================================================"
 echo "   Modelo: CLIP ViT-B/32 (iniciando do zero)"
-echo "   Configuração: Mesma do clip_vit_b32_combined_tw05"
+echo "   Configuração: Mesma do clip_vit_b32_combined_tw02"
 echo "   Loss: InfoNCE + Triplet (weight=0.5)"
 echo "   Split: 85:15 por indivíduos (do train.csv)"
 echo ""

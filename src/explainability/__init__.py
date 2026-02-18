@@ -5,10 +5,13 @@ from src.explainability.attention_rollout import (
     visualize_attention,
     generate_attention_map,
 )
+from src.explainability.grad_eclip import GradECLIP
+
 
 __all__ = [
     "AttentionRollout",
     "visualize_attention",
     "generate_attention_map",
+    "GradECLIP"
 ]
 
