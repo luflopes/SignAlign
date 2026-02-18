@@ -1,3 +1,5 @@
+# Experimento 1: Avaliar modelo pré-treinado (clip_vit_b32_combined_tw02) no dataset interno
+# Usa val.csv para avaliação com checkpoint do modelo treinado no dataset original
 seed: 5932
 output_dir: experiments/internal
 name: internal_eval_pretrained
@@ -12,7 +14,8 @@ data:
   max_samples: null
   augmentation:
     enabled: false
-  split_path: data/splits/split_v2.json
+  # Não usar split fixo - val.csv é usado diretamente para avaliação
+  split_path: null
 training:
   epochs: 0
   learning_rate: 1.0e-06
@@ -45,12 +48,12 @@ evaluation:
   compute_mrr: true
   compute_ndcg: true
   num_visualization_samples: 10
-  save_attention_maps: true
+  save_attention_maps: false
 loss:
   primary_loss: infonce
   temperature: 0.07
   use_triplet_loss: true
-  triplet_weight: 0.5
+  triplet_weight: 0.2
   triplet_margin: 0.2
   sigmoid_bias: -10.0
 model:
@@ -59,4 +62,4 @@ model:
   image_size: 224
   freeze_vision_encoder: true
   freeze_text_encoder: true
-  output_attentions: true
+  output_attentions: false

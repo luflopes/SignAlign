@@ -1,9 +1,11 @@
 #!/bin/bash
 # Script para rodar os 3 experimentos no dataset interno
 # 
-# Experimento 1: Avaliar modelo pré-treinado (clip_vit_b32_combined_tw05) no dataset interno
-# Experimento 2: Fine-tuning no dataset interno (mesma configuração)
+# Experimento 1: Avaliar modelo pré-treinado (clip_vit_b32_combined_tw02) no dataset interno
+# Experimento 2: Fine-tuning no dataset interno (mesma configuração do tw02)
 # Experimento 3: CLIP Frozen (baseline)
+#
+# NOTA: O dataset interno já tem train.csv e val.csv separados (não usa split fixo)
 #
 # Uso:
 #   bash scripts/run_internal_experiments.sh
@@ -40,8 +42,9 @@ echo ""
 echo "============================================================"
 echo "🔬 EXPERIMENTO 1: Avaliar modelo pré-treinado no dataset interno"
 echo "============================================================"
-echo "   Modelo: clip_vit_b32_combined_tw02 (treinado no dataset original)"
+echo "   Modelo: clip_vit_b32_combined_tw02 (melhor modelo, treinado no dataset original)"
 echo "   Modo: Apenas avaliação (sem treino)"
+echo "   Dataset: val.csv do dataset interno"
 echo ""
 
 # Verificar se o checkpoint existe
@@ -68,14 +71,14 @@ echo "🏋️ EXPERIMENTO 2: Fine-tuning no dataset interno"
 echo "============================================================"
 echo "   Modelo: CLIP ViT-B/32 (iniciando do zero)"
 echo "   Configuração: Mesma do clip_vit_b32_combined_tw02"
-echo "   Loss: InfoNCE + Triplet (weight=0.5)"
-echo "   Split: 85:15 por indivíduos (do train.csv)"
+echo "   Loss: InfoNCE + Triplet (weight=0.2)"
+echo "   Treino: train.csv | Validação: val.csv"
 echo ""
 
-# NOTA: NÃO passamos --val-csv aqui!
-# O train.csv será dividido internamente 85:15 por indivíduos
+# Passa --val-csv para usar o val.csv separado para validação
 python scripts/run_experiment.py \
     --config configs/internal/2_finetune_internal.yaml \
+    --val-csv datasets/internal-dataset/val.csv \
     $EXTRA_ARGS
 
 echo "✅ Experimento 2 concluído!"
@@ -89,6 +92,7 @@ echo "❄️ EXPERIMENTO 3: CLIP Frozen (baseline)"
 echo "============================================================"
 echo "   Modelo: CLIP ViT-B/32 original (sem fine-tuning)"
 echo "   Modo: Apenas avaliação"
+echo "   Dataset: val.csv do dataset interno"
 echo ""
 
 python scripts/run_experiment.py \
@@ -111,12 +115,12 @@ echo "Experimentos salvos em: experiments/internal/"
 echo ""
 echo "📁 Estrutura:"
 echo "   experiments/internal/"
-echo "   ├── internal_eval_pretrained/   (Exp 1: modelo pré-treinado)"
-echo "   ├── internal_finetune_combined/ (Exp 2: fine-tuning)"
-echo "   └── internal_clip_frozen/       (Exp 3: baseline frozen)"
+echo "   ├── internal_eval_pretrained/   (Exp 1: modelo pré-treinado tw02)"
+echo "   ├── internal_finetune_combined/ (Exp 2: fine-tuning no interno)"
+echo "   └── internal_clip_frozen/       (Exp 3: baseline CLIP frozen)"
 echo ""
 echo "🎯 Para comparar resultados:"
-echo "   cat experiments/internal/*/final_metrics.json | jq ."
+echo "   cat experiments/internal/*/metrics/val_history.json | jq ."
 echo ""
 echo "✅ Todos os experimentos concluídos!"
 

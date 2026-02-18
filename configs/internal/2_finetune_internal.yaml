@@ -1,11 +1,15 @@
+# Experimento 2: Fine-tuning no dataset interno
+# Usa train.csv para treino e val.csv para validação (passado via --val-csv)
+# Mesma configuração do melhor modelo: clip_vit_b32_combined_tw02
 seed: 5932
 output_dir: experiments/internal
 name: internal_finetune_combined
 data:
   dataset_csv: datasets/internal-dataset/train.csv
   images_base_path: datasets/internal-dataset
-  train_ratio: 0.75
-  val_ratio: 0.1
+  # train.csv é usado para treino, val.csv é passado via --val-csv
+  train_ratio: 1.0
+  val_ratio: 0.0
   batch_size: 32
   num_workers: 4
   exclude_unknown: false
@@ -43,8 +47,8 @@ data:
     blur_noise_p: 0.2
     color_p: 0.2
     compression_p: 0.2
-  split_path: data/splits/split_v2.json
-  test_ratio: 0.15
+  # Não usar split fixo - dataset interno tem train/val separados
+  split_path: null
 training:
   epochs: 30
   learning_rate: 1.0e-06
@@ -77,12 +81,12 @@ evaluation:
   compute_mrr: true
   compute_ndcg: true
   num_visualization_samples: 10
-  save_attention_maps: true
+  save_attention_maps: false
 loss:
   primary_loss: infonce
   temperature: 0.07
   use_triplet_loss: true
-  triplet_weight: 0.5
+  triplet_weight: 0.2
   triplet_margin: 0.2
   sigmoid_bias: -10.0
 model:
@@ -91,4 +95,4 @@ model:
   image_size: 224
   freeze_vision_encoder: false
   freeze_text_encoder: false
-  output_attentions: true
+  output_attentions: false

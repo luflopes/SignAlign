@@ -1,3 +1,5 @@
+# Experimento 3: CLIP Frozen (baseline) - Avaliação sem fine-tuning
+# Avalia o CLIP original no dataset interno usando val.csv
 seed: 5932
 output_dir: experiments/internal
 name: internal_clip_frozen
@@ -12,7 +14,8 @@ data:
   max_samples: null
   augmentation:
     enabled: false
-  split_path: data/splits/split_v2.json
+  # Não usar split fixo - val.csv é usado diretamente
+  split_path: null
 training:
   epochs: 0
   learning_rate: 1.0e-06
@@ -45,7 +48,7 @@ evaluation:
   compute_mrr: true
   compute_ndcg: true
   num_visualization_samples: 10
-  save_attention_maps: true
+  save_attention_maps: false
 loss:
   primary_loss: infonce
   temperature: 0.07
@@ -59,4 +62,4 @@ model:
   image_size: 224
   freeze_vision_encoder: true
   freeze_text_encoder: true
-  output_attentions: true
+  output_attentions: false
