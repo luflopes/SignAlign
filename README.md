@@ -2,18 +2,18 @@
 
 SignAlign is a modular framework for multimodal alignment between textual identities and handwritten signatures using vision-language models such as CLIP and SigLIP.
 
+## Objective
+
+The goal of this project is to train and evaluate multimodal learning models for the task of **retrieving handwritten signatures conditioned on textual identity**.
+
+Given a textual query (e.g., a person’s name) and a set of candidate signature images, the model aims to identify the signature that corresponds to the given identity.
+
 <p align="center">
   <img src="docs/signature_retrieval_pipeline.png" alt="Identity-Conditioned Signature Retrieval Pipeline" width="800"/>
 </p>
 <p align="center">
   <em>Figure: Identity-Conditioned Signature Retrieval pipeline integrated into a document processing workflow.</em>
 </p>
-
-## Objective
-
-The goal of this project is to train and evaluate multimodal learning models for the task of **retrieving handwritten signatures conditioned on textual identity**.
-
-Given a textual query (e.g., a person’s name) and a set of candidate signature images, the model aims to identify the signature that corresponds to the given identity.
 
 ## Repository Structure
 
