@@ -111,7 +111,7 @@ Access to the dataset is available upon request or through the following link:
 
 **[Dataset Link Placeholder]**
 
-(Replace this placeholder with the official dataset URL or access instructions.)
+(Note: The dataset URL will be provided after the paper acceptance)
 
 ## References
 
