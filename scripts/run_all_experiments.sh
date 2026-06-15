@@ -78,24 +78,11 @@ for CONFIG in "${CONFIGS[@]}"; do
     echo "[$COUNT/$TOTAL] Executando: $CONFIG"
     echo "====================================="
     
-    # Experimentos frozen_eval devem ser apenas avaliação (ignorar --epochs)
-    if [[ "$CONFIG" == *"frozen_eval"* ]]; then
-        # Remover --epochs dos argumentos para experimentos frozen
-        FILTERED_ARGS=$(echo "$EXTRA_ARGS" | sed 's/--epochs[[:space:]]*[0-9]*//g')
-        echo "🔒 Experimento frozen: forçando --eval-only"
-        if python scripts/run_experiment.py --config "configs/grid/${CONFIG}.yaml" --eval-only $FILTERED_ARGS; then
-            echo "✅ $CONFIG concluído"
-        else
-            echo "❌ $CONFIG FALHOU"
-            FAILED=$((FAILED + 1))
-        fi
+    if python scripts/run_experiment.py --config "configs/grid/${CONFIG}.yaml" $EXTRA_ARGS; then
+        echo "✅ $CONFIG concluído"
     else
-        if python scripts/run_experiment.py --config "configs/grid/${CONFIG}.yaml" $EXTRA_ARGS; then
-            echo "✅ $CONFIG concluído"
-        else
-            echo "❌ $CONFIG FALHOU"
-            FAILED=$((FAILED + 1))
-        fi
+        echo "❌ $CONFIG FALHOU"
+        FAILED=$((FAILED + 1))
     fi
 done
 

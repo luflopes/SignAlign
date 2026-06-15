@@ -237,7 +237,7 @@ augmentation:
 
 ![RQ2 Results](../notebooks/article_outputs/img_metrics/rq2_architecture_comparison_test.png)
 
-**Conclusão**: TinyCLIP oferece o melhor desempenho geral sem treinamento.
+**Conclusão**: CLIP-B/32 oferece o melhor desempenho geral com finetuning.
 
 ### 7.3 RQ3: Impacto da Triplet Loss
 
@@ -264,6 +264,11 @@ augmentation:
 **Melhor Configuração**: `clip_vit_b32_combined_tw02`
 - Accuracy@3neg: **97.39%**
 - Similarity Gap: **0.43**
+
+### 7.7 Erros do Melhor Modelo
+
+![Erro 1](../notebooks/article_outputs/img_metrics/error_case_2_detailed.png)
+![Erro 2](../notebooks/article_outputs/img_metrics/error_case_1_detailed.png)
 
 ---
 
@@ -416,7 +421,7 @@ jupyter notebook notebooks/analysis.ipynb
 ---
 
 ## 13. 📚 Referências
-
+- [A Dataset for Handwritten Signature ObjectDetection in Scanned Documents](https://datasetninja.com/signver-od)
 - [CLIP: Learning Transferable Visual Models](https://arxiv.org/abs/2103.00020)
 - [TinyCLIP: CLIP Distillation via Affinity Mimicking](https://arxiv.org/abs/2309.12314)
 - [SigLIP: Sigmoid Loss for Language Image Pre-Training](https://arxiv.org/abs/2303.15343)

@@ -289,6 +289,88 @@ def build_unique_name_batches(
     return batches
 
 
+def build_weighted_unique_name_batches(
+    pairs: List[Tuple[str, str]],
+    batch_size: int = 16,
+    weight_scheme: str = "inv_sqrt",
+    seed: Optional[int] = None
+) -> List[List[Tuple[str, str]]]:
+    """
+    Constrói batches com nomes únicos, amostrando indivíduos por peso.
+
+    Corrige o desbalanceamento de assinaturas por indivíduo (ex.: min 1,
+    max 59): indivíduos raros recebem maior probabilidade de seleção, de
+    forma que ao longo de uma época todos sejam vistos de modo mais
+    equilibrado. Mantém a restrição de nomes únicos por batch, essencial
+    para a loss contrastiva.
+
+    Estratégia:
+    1. Calcula o peso de cada indivíduo a partir de sua contagem de amostras
+       (inv_sqrt = 1/sqrt(contagem), inv_freq = 1/contagem).
+    2. Para cada batch, amostra indivíduos SEM reposição (garante nome único)
+       com probabilidade proporcional ao peso.
+    3. Para o indivíduo sorteado, escolhe uma de suas imagens aleatoriamente.
+    4. Gera um número de batches equivalente a uma época
+       (~len(pairs) / batch_size).
+
+    Args:
+        pairs: Lista de (caminho_imagem, nome).
+        batch_size: Tamanho máximo de cada batch.
+        weight_scheme: "inv_sqrt" ou "inv_freq".
+        seed: Seed opcional para reprodutibilidade determinística.
+
+    Returns:
+        Lista de batches, cada batch é uma lista de pares (imagem, nome).
+    """
+    rng = random.Random(seed)
+
+    # Agrupar imagens por nome
+    by_name = defaultdict(list)
+    for img, name in pairs:
+        by_name[name].append(img)
+
+    names = list(by_name.keys())
+    counts = {name: len(imgs) for name, imgs in by_name.items()}
+
+    # Pesos por indivíduo
+    if weight_scheme == "inv_freq":
+        weights = {name: 1.0 / counts[name] for name in names}
+    elif weight_scheme == "inv_sqrt":
+        weights = {name: 1.0 / (counts[name] ** 0.5) for name in names}
+    else:
+        raise ValueError(f"weight_scheme inválido: {weight_scheme}")
+
+    # Número de batches para cobrir uma época
+    total_samples = len(pairs)
+    effective_batch_size = min(batch_size, len(names))
+    if effective_batch_size == 0:
+        return []
+    num_batches = max(1, total_samples // effective_batch_size)
+
+    batches = []
+    for _ in range(num_batches):
+        # Amostragem ponderada sem reposição de indivíduos para este batch
+        available_names = list(names)
+        available_weights = [weights[n] for n in available_names]
+
+        current_batch = []
+        for _ in range(effective_batch_size):
+            if not available_names:
+                break
+            chosen = rng.choices(available_names, weights=available_weights, k=1)[0]
+            idx = available_names.index(chosen)
+            available_names.pop(idx)
+            available_weights.pop(idx)
+
+            img = rng.choice(by_name[chosen])
+            current_batch.append((img, chosen))
+
+        if current_batch:
+            batches.append(current_batch)
+
+    return batches
+
+
 def create_fixed_evaluation_data(
     val_pairs: List[Tuple[str, str]],
     max_negative_samples: int = 3,

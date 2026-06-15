@@ -24,6 +24,7 @@ from src.data.batch_builder import (
     create_train_val_split,
     create_train_val_test_split_from_file,
     build_unique_name_batches,
+    build_weighted_unique_name_batches,
     create_fixed_evaluation_data,
 )
 from src.training.scheduler import create_scheduler
@@ -395,11 +396,21 @@ class Trainer:
         """Treina uma época completa."""
         self.model.model.train()
         
-        # Construir batches únicos
-        unique_batches = build_unique_name_batches(
-            self.train_pairs,
-            batch_size=self.config.data.batch_size
-        )
+        # Construir batches únicos (ponderado por indivíduo, se habilitado)
+        if self.config.data.use_weighted_sampler:
+            # Seed determinística por run, variando a cada época
+            epoch_seed = self.config.seed + self.current_epoch
+            unique_batches = build_weighted_unique_name_batches(
+                self.train_pairs,
+                batch_size=self.config.data.batch_size,
+                weight_scheme=self.config.data.weight_scheme,
+                seed=epoch_seed
+            )
+        else:
+            unique_batches = build_unique_name_batches(
+                self.train_pairs,
+                batch_size=self.config.data.batch_size
+            )
         random.shuffle(unique_batches)
         
         total_loss = 0.0

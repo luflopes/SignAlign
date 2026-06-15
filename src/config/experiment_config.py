@@ -126,6 +126,11 @@ class DataConfig:
     batch_size: int = 8
     num_workers: int = 4
     
+    # Amostragem ponderada por indivíduo (corrige desbalanceamento de
+    # assinaturas por indivíduo). Mantém nomes únicos por batch.
+    use_weighted_sampler: bool = False
+    weight_scheme: Literal["inv_sqrt", "inv_freq"] = "inv_sqrt"
+    
     # Filtros
     exclude_unknown: bool = True
     

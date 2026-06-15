@@ -363,7 +363,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--output",
-        default="datasets/dataset-sign-align/splits/split_v2.json",
+        default="datasets/dataset-sign-align/splits/split_v2_sanity.json",
         help="Caminho para salvar o split"
     )
     parser.add_argument("--seed", type=int, default=5932, help="Seed")

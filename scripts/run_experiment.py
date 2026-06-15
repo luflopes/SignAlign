@@ -80,6 +80,12 @@ def parse_args():
     )
     
     parser.add_argument(
+        "--no-weighted-sampler",
+        action="store_true",
+        help="Desabilita a amostragem ponderada por indivíduo (que vem ligada nas configs do grid)"
+    )
+    
+    parser.add_argument(
         "--freeze-vision",
         action="store_true",
         help="Congela vision encoder"
@@ -162,6 +168,10 @@ def main():
     
     if args.no_augmentation:
         config.data.augmentation.enabled = False
+    
+    if args.no_weighted_sampler:
+        config.data.use_weighted_sampler = False
+        print("⚖️ Amostragem ponderada por indivíduo DESATIVADA")
     
     if args.freeze_vision:
         config.model.freeze_vision_encoder = True
