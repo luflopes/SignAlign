@@ -142,28 +142,36 @@ class Trainer:
     def _load_pretrained_checkpoint(self, checkpoint_path: str) -> None:
         """
         Carrega pesos de um checkpoint pré-treinado.
-        
+
+        Usa AutoModel/AutoProcessor para inferir a arquitetura a partir do
+        config.json do checkpoint, suportando CLIP, TinyCLIP (arquitetura CLIP)
+        e SigLIP (arquitetura Siglip) de forma genérica.
+
         Args:
             checkpoint_path: Caminho para o diretório do checkpoint.
         """
-        from transformers import CLIPModel, CLIPProcessor
-        
+        from transformers import AutoModel, AutoProcessor
+
         checkpoint_dir = Path(checkpoint_path)
-        
+
         if not checkpoint_dir.exists():
             raise FileNotFoundError(f"Checkpoint não encontrado: {checkpoint_path}")
-        
+
         print(f"   📥 Carregando checkpoint: {checkpoint_path}")
-        
-        # Carregar modelo do checkpoint
-        loaded_model = CLIPModel.from_pretrained(checkpoint_dir)
-        
-        # Copiar pesos para o modelo atual
+
+        # Carregar modelo do checkpoint (classe inferida pelo config.json)
+        loaded_model = AutoModel.from_pretrained(checkpoint_dir)
+
+        # Copiar pesos para o modelo atual (mesma arquitetura/tipo da config)
         self.model.model.load_state_dict(loaded_model.state_dict())
-        
-        # Carregar processor também (por consistência)
-        self.processor = CLIPProcessor.from_pretrained(checkpoint_dir)
-        
+
+        # Carregar processor também (por consistência), tolerante a falhas
+        try:
+            self.processor = AutoProcessor.from_pretrained(checkpoint_dir)
+        except Exception as e:
+            print(f"   ⚠️ Não foi possível carregar o processor do checkpoint "
+                  f"({e}); mantendo o processor base do modelo.")
+
         print(f"   ✅ Checkpoint carregado com sucesso!")
     
     def _setup_data(self, val_csv: Optional[str] = None) -> None:
