@@ -7,6 +7,8 @@ experiments/
 EXPERIMENT_GUIDE.md
 cursor_framework_modular_para_recupera.md
 TODO
+notebooks/
+docs/
 
 # Python
 __pycache__/
@@ -71,3 +73,5 @@ cur
 *.jpeg
 *.svg
 *.pdf
+*.tex
+*.ipynb
