@@ -76,3 +76,7 @@ cur
 *.tex
 *.ipynb
 notebooks/
+
+# docs: keep only the figure used in the README
+docs/*
+!docs/signature_retrieval_pipeline.png

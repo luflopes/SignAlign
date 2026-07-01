@@ -8,12 +8,9 @@ The goal of this project is to train and evaluate multimodal learning models for
 
 Given a textual query (e.g., a person’s name) and a set of candidate signature images, the model aims to identify the signature that corresponds to the given identity.
 
-<p align="center">
-  <img src="docs/signature_retrieval_pipeline.png" alt="Identity-Conditioned Signature Retrieval Pipeline" width="800"/>
-</p>
-<p align="center">
-  <em>Figure: Identity-Conditioned Signature Retrieval pipeline integrated into a document processing workflow.</em>
-</p>
+
+
+*Figure: Identity-Conditioned Signature Retrieval pipeline integrated into a document processing workflow.*
 
 ## Repository Structure
 
@@ -46,11 +43,6 @@ scripts/
 ├── generate_internal_configs.py # Generate proprietary-dataset configs
 ├── run_internal_experiments_v2.sh # Run 3 models x 3 schemes on internal data
 └── count_parameters.py          # Report parameter counts per model
-
-notebooks/
-├── SignAlign.ipynb      # Original experiments
-├── analysis.ipynb       # Result analysis and comparisons
-└── analysis_test.ipynb  # Multi-seed analysis, significance and internal dataset
 ```
 
 ## Installation and Usage
@@ -88,11 +80,13 @@ The framework supports a range of evaluation metrics commonly used in retrieval 
 
 The framework includes a predefined grid of experiments exploring different models, training strategies, and loss functions:
 
-| Model           | Variants                                      |
-|-----------------|-----------------------------------------------|
-| TinyCLIP        | Frozen, InfoNCE, Combined (λ = 0.1–0.5)       |
-| CLIP ViT-B/32   | Frozen, InfoNCE, Combined (λ = 0.1–0.5)       |
-| SigLIP          | Frozen, Sigmoid, Combined (λ = 0.1–0.5)       |
+
+| Model         | Variants                                |
+| ------------- | --------------------------------------- |
+| TinyCLIP      | Frozen, InfoNCE, Combined (λ = 0.1–0.5) |
+| CLIP ViT-B/32 | Frozen, InfoNCE, Combined (λ = 0.1–0.5) |
+| SigLIP        | Frozen, Sigmoid, Combined (λ = 0.1–0.5) |
+
 
 Each configuration is evaluated with and without data augmentation.
 
@@ -145,10 +139,10 @@ python scripts/analyze_significance.py
 
 - Fine-tuning provides the largest and most reliable gain over the frozen baseline.
 - Under balanced sampling and multi-seed evaluation, **TinyCLIP** achieves the best
-  overall retrieval accuracy while being the most efficient model (Pareto-optimal),
-  slightly ahead of CLIP-B/32, with SigLIP behind.
+overall retrieval accuracy while being the most efficient model (Pareto-optimal),
+slightly ahead of CLIP-B/32, with SigLIP behind.
 - The triplet component yields marginal, architecture-dependent changes and mainly
-  reduces variance across seeds.
+reduces variance across seeds.
 
 ## Inference
 
@@ -173,9 +167,9 @@ Access to the dataset is available upon request or through the following link:
 
 ## References
 
-- CLIP: https://arxiv.org/abs/2103.00020  
-- SigLIP: https://arxiv.org/abs/2303.15343  
-- TinyCLIP: https://arxiv.org/abs/2309.12314  
+- CLIP: [https://arxiv.org/abs/2103.00020](https://arxiv.org/abs/2103.00020)  
+- SigLIP: [https://arxiv.org/abs/2303.15343](https://arxiv.org/abs/2303.15343)  
+- TinyCLIP: [https://arxiv.org/abs/2309.12314](https://arxiv.org/abs/2309.12314)
 
 ## License
 
