@@ -1,6 +1,6 @@
 # SignAlign
 
-SignAlign is a modular framework for multimodal alignment between textual identities and handwritten signatures using vision-language models such as CLIP and SigLIP.
+SignAlign is a modular framework for multimodal alignment between textual identities and handwritten signatures using vision-language models such as CLIP, TinyCLIP, and SigLIP.
 
 ## Objective
 
@@ -31,16 +31,26 @@ src/
 
 configs/
 ├── base.yaml         # Base configuration
-└── grid/             # Configurations for grid search experiments
+├── grid/             # Configurations for grid search experiments
+├── lr_search/        # Configurations for the learning-rate search
+└── internal/         # Configurations for the proprietary-dataset experiments
 
 scripts/
-├── run_experiment.py       # Execute a single experiment
-├── run_all_experiments.sh  # Run full experimental grid
-└── generate_experiment_grid.py
+├── run_experiment.py            # Execute a single experiment
+├── run_all_experiments.sh       # Run full experimental grid
+├── generate_experiment_grid.py  # Generate grid configs (applies best LR)
+├── run_lr_search.sh             # Learning-rate search per model
+├── analyze_lr_search.py         # Select best LR per model (best_lr.json)
+├── run_significance_grid.sh     # Multi-seed runs for significance testing
+├── analyze_significance.py      # Statistical significance analysis
+├── generate_internal_configs.py # Generate proprietary-dataset configs
+├── run_internal_experiments_v2.sh # Run 3 models x 3 schemes on internal data
+└── count_parameters.py          # Report parameter counts per model
 
 notebooks/
-├── SignAlign.ipynb   # Original experiments
-└── analysis.ipynb    # Result analysis and comparisons
+├── SignAlign.ipynb      # Original experiments
+├── analysis.ipynb       # Result analysis and comparisons
+└── analysis_test.ipynb  # Multi-seed analysis, significance and internal dataset
 ```
 
 ## Installation and Usage
@@ -91,6 +101,54 @@ To execute the full experimental grid:
 ```bash
 bash scripts/run_all_experiments.sh
 ```
+
+## Training Strategies
+
+### Class Imbalance Handling
+
+The dataset exhibits a long-tailed distribution of signatures per identity. To
+mitigate this, training uses a **weighted random sampler** in which each sample
+is drawn with probability inversely proportional to the square root of its
+identity frequency (`weight_scheme: inv_sqrt`), up-weighting under-represented
+individuals and balancing identity exposure during training. It is enabled by
+default in every grid configuration and can be disabled with:
+
+```bash
+python scripts/run_experiment.py --config configs/grid/<config>.yaml --no-weighted-sampler
+```
+
+### Learning-Rate Search
+
+The optimal learning rate is selected per model from {1e-4, 1e-5, 1e-6} using a
+simple fine-tuning setup (no augmentation or combined loss):
+
+```bash
+bash scripts/run_lr_search.sh
+python scripts/analyze_lr_search.py   # writes experiments/lr_search/best_lr.json
+```
+
+The selected values (1e-6 for TinyCLIP and CLIP-B/32, 1e-5 for SigLIP) are
+automatically applied when generating the grid configurations.
+
+### Statistical Significance
+
+To assess the reliability of the results, the grid is repeated over five random
+seeds, and significance is evaluated with paired tests (seed-paired t-test /
+Wilcoxon) and Friedman with Nemenyi post-hoc for model comparison:
+
+```bash
+bash scripts/run_significance_grid.sh
+python scripts/analyze_significance.py
+```
+
+## Key Findings
+
+- Fine-tuning provides the largest and most reliable gain over the frozen baseline.
+- Under balanced sampling and multi-seed evaluation, **TinyCLIP** achieves the best
+  overall retrieval accuracy while being the most efficient model (Pareto-optimal),
+  slightly ahead of CLIP-B/32, with SigLIP behind.
+- The triplet component yields marginal, architecture-dependent changes and mainly
+  reduces variance across seeds.
 
 ## Inference
 

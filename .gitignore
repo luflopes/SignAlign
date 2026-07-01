@@ -75,3 +75,4 @@ cur
 *.pdf
 *.tex
 *.ipynb
+notebooks/
