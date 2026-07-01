@@ -15,8 +15,6 @@ Given a textual query (e.g., a person’s name) and a set of candidate signature
   <em>Figure: Identity-Conditioned Signature Retrieval pipeline integrated into a document processing workflow.</em>
 </p>
 
-*Figure: Identity-Conditioned Signature Retrieval pipeline integrated into a document processing workflow.*
-
 ## Repository Structure
 
 ```
